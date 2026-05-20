@@ -6,7 +6,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_DIR = BASE_DIR.parent
 
 env = environ.Env()
-environ.Env.read_env(ROOT_DIR / '.env')
+_env_file = ROOT_DIR / '.env'
+if _env_file.exists():
+    environ.Env.read_env(_env_file)
 
 SECRET_KEY = env('SECRET_KEY')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
