@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.utils import timezone
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
@@ -94,7 +95,7 @@ class LeadViewSet(viewsets.ModelViewSet):
             lead.pipeline = won_stage
 
         lead.won_at = timezone.now()
-        lead.probability = 100
+        lead.probability = Decimal('100')
         lead.save()
 
         return Response(LeadDetailSerializer(lead, context={'request': request}).data)
@@ -114,7 +115,7 @@ class LeadViewSet(viewsets.ModelViewSet):
 
         lead.lost_at = timezone.now()
         lead.lost_reason = request.data.get('reason', '')
-        lead.probability = 0
+        lead.probability = Decimal('0')
         lead.save()
 
         return Response(LeadDetailSerializer(lead, context={'request': request}).data)
