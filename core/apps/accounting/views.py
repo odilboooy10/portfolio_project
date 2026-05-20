@@ -8,6 +8,7 @@ from .serializers import (
     JournalEntryListSerializer, JournalEntryDetailSerializer,
     PaymentSerializer,
 )
+from .tasks import send_payment_confirmation
 
 
 class IsManagerOrReadOnly(permissions.BasePermission):
@@ -150,6 +151,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
     search_fields = ['reference', 'note']
     ordering_fields = ['date', 'amount', 'created_at']
     ordering = ['-date']
+
+    def perform_create(self, serializer):
+        payment = serializer.save(created_by=self.request.user)
+        send_payment_confirmation.delay(str(payment.id))
 
     def get_queryset(self):
         qs = Payment.objects.select_related('journal', 'invoice', 'purchase_order', 'created_by')
