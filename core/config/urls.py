@@ -2,9 +2,20 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
+
+from views import LoginView, LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Frontend auth
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+
+    # Frontend pages
+    path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
+    path('dashboard/', include('apps.dashboard.urls_frontend', namespace='dashboard')),
 
     # API v1
     path('api/v1/', include('config.api_urls')),

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — ERP Core{% endblock %}
+
+{% block auth_content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center"
+     style="background: linear-gradient(135deg, #1e2a3a 0%, #2c3e55 100%);">
+  <div class="card shadow-lg border-0" style="width: 100%; max-width: 400px; border-radius: 1rem;">
+    <div class="card-body p-4 p-md-5">
+
+      <div class="text-center mb-4">
+        <h4 class="fw-bold mb-1">ERP <span class="text-primary">Core</span></h4>
+        <p class="text-muted small">Sign in to your account</p>
+      </div>
+
+      {% if form.errors %}
+        <div class="alert alert-danger py-2 small">
+          Invalid email or password. Please try again.
+        </div>
+      {% endif %}
+
+      {% if next %}
+        <div class="alert alert-warning py-2 small">
+          Please log in to access that page.
+        </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Email</label>
+          <input
+            type="email"
+            name="username"
+            class="form-control{% if form.username.errors %} is-invalid{% endif %}"
+            placeholder="you@example.com"
+            value="{{ form.username.value|default:'' }}"
+            autofocus
+            required>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Password</label>
+          <input
+            type="password"
+            name="password"
+            class="form-control{% if form.password.errors %} is-invalid{% endif %}"
+            placeholder="••••••••"
+            required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
