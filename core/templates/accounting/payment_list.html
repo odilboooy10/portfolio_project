@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Payments — Accounting — ERP Core{% endblock %}
+{% block page_title %}Accounting — Payments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Accounting</span>
+    <h1 class="page-header__title">Payments</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'accounting:journal-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-journal-text"></i> Journal Entries
+    </a>
+  </div>
+</div>
+
+<!-- Summary KPI strip -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);
+            padding:var(--space-4) var(--space-6);background:var(--color-card-bg);
+            border-bottom:1px solid var(--color-border);">
+  <div style="display:flex;align-items:center;gap:var(--space-4);">
+    <div style="width:36px;height:36px;background:var(--color-success-light);border-radius:var(--radius-md);
+                display:flex;align-items:center;justify-content:center;color:var(--color-success);">
+      <i class="bi bi-arrow-down-circle-fill"></i>
+    </div>
+    <div>
+      <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                  letter-spacing:0.05em;font-weight:var(--font-semi);">Total Inbound</div>
+      <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-success);">
+        ${{ total_inbound|floatformat:2 }}
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:var(--space-4);">
+    <div style="width:36px;height:36px;background:var(--color-danger-light);border-radius:var(--radius-md);
+                display:flex;align-items:center;justify-content:center;color:var(--color-danger);">
+      <i class="bi bi-arrow-up-circle-fill"></i>
+    </div>
+    <div>
+      <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                  letter-spacing:0.05em;font-weight:var(--font-semi);">Total Outbound</div>
+      <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-danger);">
+        ${{ total_outbound|floatformat:2 }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:180px;max-width:260px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search reference…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="type" class="form-select" style="width:auto;">
+      <option value="">All types</option>
+      {% for val, label in payment_types %}
+      <option value="{{ val }}" {% if current_type == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="method" class="form-select" style="width:auto;">
+      <option value="">All methods</option>
+      {% for val, label in payment_methods %}
+      <option value="{{ val }}" {% if current_method == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_type or current_method %}
+    <a href="{% url 'accounting:payment-list' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="panel" style="border-radius:0;border-left:none;border-right:none;border-top:none;">
+  {% if payments %}
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Method</th>
+        <th style="text-align:right;">Amount</th>
+        <th>Journal</th>
+        <th>Source</th>
+        <th>Created By</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for payment in payments %}
+      <tr>
+        <td style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+          {{ payment.reference }}
+        </td>
+        <td style="color:var(--color-text-muted);">{{ payment.date|date:"d M Y" }}</td>
+        <td>
+          {% if payment.payment_type == 'inbound' %}
+          <span class="badge-status badge-done">
+            <i class="bi bi-arrow-down"></i> Inbound
+          </span>
+          {% else %}
+          <span class="badge-status badge-cancelled">
+            <i class="bi bi-arrow-up"></i> Outbound
+          </span>
+          {% endif %}
+        </td>
+        <td>
+          <span style="font-size:var(--text-xs);background:#f1f5f9;padding:2px 8px;
+                       border-radius:var(--radius-full);color:var(--color-text-secondary);">
+            {{ payment.get_payment_method_display }}
+          </span>
+        </td>
+        <td style="text-align:right;font-weight:var(--font-bold);
+            color:{% if payment.payment_type == 'inbound' %}var(--color-success){% else %}var(--color-danger){% endif %};">
+          {% if payment.payment_type == 'inbound' %}+{% else %}-{% endif %}${{ payment.amount }}
+        </td>
+        <td style="color:var(--color-text-muted);font-size:var(--text-xs);">
+          {{ payment.journal.code }}
+        </td>
+        <td style="font-size:var(--text-xs);color:var(--color-text-muted);">
+          {% if payment.invoice %}
+          <a href="{% url 'sales:invoice-detail' payment.invoice.pk %}"
+             style="color:var(--color-primary);text-decoration:none;">
+            {{ payment.invoice.reference }}
+          </a>
+          {% elif payment.purchase_order %}
+          <a href="{% url 'purchase:po-detail' payment.purchase_order.pk %}"
+             style="color:var(--color-primary);text-decoration:none;">
+            {{ payment.purchase_order.reference }}
+          </a>
+          {% else %}—{% endif %}
+        </td>
+        <td style="color:var(--color-text-muted);">{{ payment.created_by.get_full_name|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="d-flex gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-credit-card" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No payments found{% if q or current_type or current_method %} matching your filters{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Chart of Accounts — ERP Core{% endblock %}
+{% block page_title %}Accounting — Chart of Accounts{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Accounting</span>
+    <h1 class="page-header__title">Chart of Accounts</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'accounting:journal-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-journal-text"></i> Journal Entries
+    </a>
+    <a href="{% url 'accounting:payment-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-credit-card"></i> Payments
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:200px;max-width:300px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search code or name…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="type" class="form-select" style="width:auto;">
+      <option value="">All types</option>
+      {% for val, label in account_types %}
+      <option value="{{ val }}" {% if current_type == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_type %}
+    <a href="{% url 'accounting:account-list' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div style="padding:var(--space-5) var(--space-6);display:flex;flex-direction:column;gap:var(--space-5);">
+  {% for type_val, type_label, group in grouped %}
+  {% if group %}
+  <div class="panel">
+    <div class="panel-header" style="background:#f8fafc;">
+      <div style="display:flex;align-items:center;gap:var(--space-3);">
+        {% if type_val == 'asset' %}<i class="bi bi-bank2" style="color:var(--color-primary);"></i>
+        {% elif type_val == 'liability' %}<i class="bi bi-arrow-down-circle" style="color:var(--color-danger);"></i>
+        {% elif type_val == 'equity' %}<i class="bi bi-pie-chart" style="color:var(--color-success);"></i>
+        {% elif type_val == 'revenue' %}<i class="bi bi-graph-up-arrow" style="color:var(--color-success);"></i>
+        {% elif type_val == 'expense' %}<i class="bi bi-graph-down-arrow" style="color:var(--color-warning);"></i>
+        {% endif %}
+        <span>{{ type_label }}</span>
+      </div>
+      <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+        {{ group|length }} account{{ group|length|pluralize }}
+      </span>
+    </div>
+    <table class="erp-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Parent</th>
+          <th>Description</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in group %}
+        <tr>
+          <td>
+            <code style="font-size:var(--text-xs);background:#f1f5f9;padding:2px 6px;
+                         border-radius:var(--radius-sm);color:var(--color-text-secondary);
+                         font-weight:var(--font-semi);">
+              {{ account.code }}
+            </code>
+          </td>
+          <td style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+            {% if account.parent %}
+            <span style="color:var(--color-text-muted);margin-right:var(--space-2);">└</span>
+            {% endif %}
+            {{ account.name }}
+          </td>
+          <td style="color:var(--color-text-muted);font-size:var(--text-xs);">
+            {{ account.parent.name|default:"—" }}
+          </td>
+          <td style="color:var(--color-text-muted);font-size:var(--text-xs);max-width:300px;">
+            {{ account.description|truncatechars:60|default:"—" }}
+          </td>
+          <td>
+            {% if account.is_active %}
+            <span class="badge-status badge-done">Active</span>
+            {% else %}
+            <span class="badge-status badge-cancelled">Inactive</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if not accounts %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-journal-x" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No accounts found{% if q or current_type %} matching your filters{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
