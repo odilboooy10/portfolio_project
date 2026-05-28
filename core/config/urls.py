@@ -16,6 +16,7 @@ urlpatterns = [
     # Frontend pages
     path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
     path('dashboard/', include('apps.dashboard.urls_frontend', namespace='dashboard')),
+    path('sales/',     include('apps.sales.urls_frontend',     namespace='sales')),
 
     # API v1
     path('api/v1/', include('config.api_urls')),

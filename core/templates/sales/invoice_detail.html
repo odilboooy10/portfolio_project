@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.reference }} — ERP Core{% endblock %}
+{% block page_title %}{{ invoice.reference }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'sales:invoice-list' %}">Sales</a> / Invoices
+    </span>
+    <h1 class="page-header__title">{{ invoice.reference }}</h1>
+  </div>
+  <div class="page-header__actions">
+    {% if invoice.status == 'draft' %}
+    <form method="post" action="{% url 'sales:invoice-issue' invoice.pk %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-primary">
+        <i class="bi bi-send"></i> Issue Invoice
+      </button>
+    </form>
+    {% endif %}
+    {% if invoice.status == 'issued' %}
+    <form method="post" action="{% url 'sales:invoice-paid' invoice.pk %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-primary">
+        <i class="bi bi-check-circle"></i> Mark as Paid
+      </button>
+    </form>
+    {% endif %}
+    {% if invoice.status == 'draft' or invoice.status == 'issued' %}
+    <form method="post" action="{% url 'sales:invoice-cancel' invoice.pk %}" style="display:inline;"
+          onsubmit="return confirm('Cancel this invoice?')">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-danger">
+        <i class="bi bi-x-lg"></i> Cancel
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  {% for step_val, step_label in pipeline %}
+  {% if not forloop.first %}<span class="status-bar__arrow">›</span>{% endif %}
+  <span class="status-bar__step
+    {% if invoice.status == step_val %}status-bar__step--active
+    {% elif invoice.status == 'paid' and step_val != 'paid' %}status-bar__step--done
+    {% elif invoice.status == 'issued' and step_val == 'draft' %}status-bar__step--done
+    {% endif %}">
+    {% if invoice.status == 'paid' and step_val != 'paid' %}<i class="bi bi-check" style="margin-right:2px;"></i>{% endif %}
+    {% if invoice.status == 'issued' and step_val == 'draft' %}<i class="bi bi-check" style="margin-right:2px;"></i>{% endif %}
+    {{ step_label }}
+  </span>
+  {% endfor %}
+  {% if invoice.status == 'cancelled' %}
+  <span class="status-bar__arrow">›</span>
+  <span class="badge-status badge-cancelled" style="font-size:11px;">Cancelled</span>
+  {% endif %}
+</div>
+
+<!-- Body -->
+<div style="padding:var(--space-6);display:grid;grid-template-columns:1fr 320px;gap:var(--space-6);align-items:start;">
+
+  <!-- Left: invoice lines -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">Invoice Lines</div>
+      {% if invoice.lines.all %}
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Product / SKU</th>
+            <th>Description</th>
+            <th style="text-align:right;">Qty</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in invoice.lines.all %}
+          <tr>
+            <td>
+              <div style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+                {{ line.variant.product.name }}
+              </div>
+              <div style="font-size:var(--text-xs);color:var(--color-text-muted);">{{ line.variant.sku }}</div>
+            </td>
+            <td style="color:var(--color-text-muted);">{{ line.description|default:"—" }}</td>
+            <td style="text-align:right;">{{ line.quantity }}</td>
+            <td style="text-align:right;">${{ line.unit_price }}</td>
+            <td style="text-align:right;font-weight:var(--font-medium);">${{ line.line_total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+                  display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-1);">
+        <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+          Subtotal: <strong style="color:var(--color-text-primary);">${{ invoice.subtotal }}</strong>
+        </div>
+        {% if invoice.discount > 0 %}
+        <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+          Discount: <strong>{{ invoice.discount }}%</strong>
+        </div>
+        {% endif %}
+        <div style="font-size:var(--text-base);font-weight:var(--font-bold);color:var(--color-text-primary);
+                    border-top:1px solid var(--color-border);padding-top:var(--space-2);margin-top:var(--space-1);">
+          Total: ${{ invoice.total }}
+        </div>
+      </div>
+      {% else %}
+      <div style="padding:var(--space-10);text-align:center;color:var(--color-text-muted);">
+        No lines on this invoice.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: invoice summary -->
+  <div class="panel">
+    <div class="panel-header">Details</div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+      <div>
+        <div class="form-label">Customer</div>
+        <div style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+          {{ invoice.customer.name }}
+        </div>
+        {% if invoice.customer.email %}
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);">{{ invoice.customer.email }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <div class="form-label">Status</div>
+        <span class="badge-status badge-{{ invoice.status }}">
+          {{ invoice.get_status_display }}
+        </span>
+      </div>
+
+      {% if invoice.sale_order %}
+      <div>
+        <div class="form-label">Sale Order</div>
+        <a href="{% url 'sales:order-detail' invoice.sale_order.pk %}"
+           style="color:var(--color-primary);text-decoration:none;font-size:var(--text-sm);">
+          {{ invoice.sale_order.reference }}
+        </a>
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="form-label">Issue Date</div>
+        <div style="font-size:var(--text-sm);">{{ invoice.issue_date|date:"d M Y"|default:"—" }}</div>
+      </div>
+
+      <div>
+        <div class="form-label">Due Date</div>
+        <div style="font-size:var(--text-sm);">{{ invoice.due_date|date:"d M Y"|default:"—" }}</div>
+      </div>
+
+      {% if invoice.paid_at %}
+      <div>
+        <div class="form-label">Paid At</div>
+        <div style="font-size:var(--text-sm);color:var(--color-success);">
+          {{ invoice.paid_at|date:"d M Y, H:i" }}
+        </div>
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="form-label">Created by</div>
+        <div style="font-size:var(--text-sm);">{{ invoice.created_by.get_full_name|default:"—" }}</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
