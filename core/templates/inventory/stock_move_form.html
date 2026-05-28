@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}New Stock Move — Inventory — ERP Core{% endblock %}
+{% block page_title %}New Stock Move{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'inventory:stock-levels' %}">Inventory</a> / Stock Levels
+    </span>
+    <h1 class="page-header__title">New Stock Move</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'inventory:stock-levels' %}" class="btn-erp-ghost">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+</div>
+
+<div style="padding:var(--space-6);max-width:640px;">
+  <div class="panel">
+    <div class="panel-header">Record a stock movement</div>
+    <form method="post" action="{% url 'inventory:stock-move-create' %}">
+      {% csrf_token %}
+
+      <div class="form-section">
+        <p class="form-section__title">Movement Details</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+
+          <div style="grid-column:1/-1;">
+            <label class="form-label" for="variant">Product Variant <span style="color:var(--color-danger);">*</span></label>
+            <select name="variant" id="variant" class="form-select" required>
+              <option value="">— Select variant —</option>
+              {% for v in variants %}
+              <option value="{{ v.pk }}">{{ v.product.name }} — {{ v.sku }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="warehouse">Warehouse <span style="color:var(--color-danger);">*</span></label>
+            <select name="warehouse" id="warehouse" class="form-select" required>
+              <option value="">— Select warehouse —</option>
+              {% for wh in warehouses %}
+              <option value="{{ wh.pk }}">{{ wh.name }} ({{ wh.code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="move_type">Move Type <span style="color:var(--color-danger);">*</span></label>
+            <select name="move_type" id="move_type" class="form-select" required>
+              <option value="">— Select type —</option>
+              {% for val, label in move_types %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="quantity">Quantity <span style="color:var(--color-danger);">*</span></label>
+            <input type="number" name="quantity" id="quantity" class="form-control"
+                   min="0.0001" step="0.0001" placeholder="e.g. 50" required>
+            <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-1);">
+              Enter a positive number — direction is set by move type.
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" for="reference">Reference</label>
+            <input type="text" name="reference" id="reference" class="form-control"
+                   placeholder="e.g. PO-00042, ADJ-2024-01">
+          </div>
+
+          <div>
+            <label class="form-label" for="note">Note</label>
+            <input type="text" name="note" id="note" class="form-control"
+                   placeholder="Optional internal note">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Move type help -->
+      <div style="padding:var(--space-4) var(--space-6);background:#f8fafc;
+                  border-top:1px solid var(--color-border);">
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);display:flex;gap:var(--space-6);flex-wrap:wrap;">
+          <div><strong style="color:var(--color-success);">Stock In</strong> — receiving goods, purchase receipt</div>
+          <div><strong style="color:var(--color-danger);">Stock Out</strong> — fulfilling orders, write-offs</div>
+          <div><strong style="color:var(--color-info);">Adjustment</strong> — manual count correction</div>
+          <div><strong style="color:var(--color-warning);">Transfer</strong> — between warehouses</div>
+        </div>
+      </div>
+
+      <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--color-border);
+                  display:flex;gap:var(--space-3);">
+        <button type="submit" class="btn-erp-primary">
+          <i class="bi bi-check-lg"></i> Save Move
+        </button>
+        <a href="{% url 'inventory:stock-levels' %}" class="btn-erp-ghost">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
