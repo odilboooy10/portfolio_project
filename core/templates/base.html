@@ -433,6 +433,7 @@
     {% url 'crm:lead-list'          as url_crm %}
     {% url 'purchase:po-list'       as url_purchase %}
     {% url 'accounting:journal-list' as url_accounting %}
+    {% url 'users:user-list'        as url_users %}
 
     <p class="sidebar-label">Modules</p>
     <a href="{{ url_sales|default:'#' }}"
@@ -457,6 +458,12 @@
     </a>
 
     <p class="sidebar-label">System</p>
+    {% if request.user.is_admin %}
+    <a href="{{ url_users|default:'#' }}"
+       class="nav-link-sidebar {% if request.resolver_match.namespace == 'users' %}active{% endif %}">
+      <i class="bi bi-person-gear"></i> Users
+    </a>
+    {% endif %}
     <a href="/api/v1/docs/" class="nav-link-sidebar" target="_blank">
       <i class="bi bi-braces"></i> API Docs
     </a>
