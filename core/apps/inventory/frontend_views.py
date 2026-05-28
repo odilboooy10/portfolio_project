@@ -1,0 +1,150 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
+from django.views.generic import DetailView, FormView, ListView, TemplateView
+
+from apps.inventory.models import (
+    Category, Product, StockLevel, StockMove, Warehouse, ProductVariant
+)
+
+LOW_STOCK_THRESHOLD = 5
+
+
+class ProductListView(LoginRequiredMixin, ListView):
+    model = Product
+    template_name = 'inventory/product_list.html'
+    context_object_name = 'products'
+    paginate_by = 30
+
+    def get_queryset(self):
+        qs = Product.objects.select_related('category').prefetch_related('variants')
+        q = self.request.GET.get('q', '').strip()
+        category_id = self.request.GET.get('category')
+        active = self.request.GET.get('active')
+
+        if q:
+            qs = qs.filter(name__icontains=q) | qs.filter(sku__icontains=q)
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        if active == '1':
+            qs = qs.filter(is_active=True)
+        elif active == '0':
+            qs = qs.filter(is_active=False)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['categories'] = Category.objects.filter(parent=None)
+        ctx['q'] = self.request.GET.get('q', '')
+        ctx['current_category'] = self.request.GET.get('category', '')
+        ctx['current_active'] = self.request.GET.get('active', '')
+        return ctx
+
+
+class ProductDetailView(LoginRequiredMixin, DetailView):
+    model = Product
+    template_name = 'inventory/product_detail.html'
+    context_object_name = 'product'
+
+    def get_queryset(self):
+        return Product.objects.select_related('category').prefetch_related(
+            'variants__attribute_values__attribute',
+            'variants__stock_levels__warehouse',
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['warehouses'] = Warehouse.objects.filter(is_active=True)
+        ctx['low_threshold'] = LOW_STOCK_THRESHOLD
+        return ctx
+
+
+class StockLevelListView(LoginRequiredMixin, ListView):
+    model = StockLevel
+    template_name = 'inventory/stock_levels.html'
+    context_object_name = 'stock_levels'
+    paginate_by = 40
+
+    def get_queryset(self):
+        qs = StockLevel.objects.select_related(
+            'variant__product', 'warehouse'
+        ).order_by('variant__product__name', 'warehouse__name')
+
+        q = self.request.GET.get('q', '').strip()
+        warehouse_id = self.request.GET.get('warehouse')
+        low = self.request.GET.get('low')
+
+        if q:
+            qs = qs.filter(variant__product__name__icontains=q) | qs.filter(variant__sku__icontains=q)
+        if warehouse_id:
+            qs = qs.filter(warehouse_id=warehouse_id)
+        if low == '1':
+            qs = qs.filter(quantity__lte=LOW_STOCK_THRESHOLD)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['warehouses'] = Warehouse.objects.filter(is_active=True)
+        ctx['q'] = self.request.GET.get('q', '')
+        ctx['current_warehouse'] = self.request.GET.get('warehouse', '')
+        ctx['current_low'] = self.request.GET.get('low', '')
+        ctx['low_threshold'] = LOW_STOCK_THRESHOLD
+        ctx['low_count'] = StockLevel.objects.filter(quantity__lte=LOW_STOCK_THRESHOLD).count()
+        return ctx
+
+
+class StockMoveCreateView(LoginRequiredMixin, TemplateView):
+    template_name = 'inventory/stock_move_form.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['variants'] = ProductVariant.objects.filter(
+            is_active=True
+        ).select_related('product').order_by('product__name', 'sku')
+        ctx['warehouses'] = Warehouse.objects.filter(is_active=True)
+        ctx['move_types'] = StockMove.MoveType.choices
+        return ctx
+
+    def post(self, request):
+        variant_id = request.POST.get('variant')
+        warehouse_id = request.POST.get('warehouse')
+        move_type = request.POST.get('move_type')
+        note = request.POST.get('note', '')
+        reference = request.POST.get('reference', '')
+
+        try:
+            qty = abs(float(request.POST.get('quantity', 0)))
+        except (ValueError, TypeError):
+            messages.error(request, 'Invalid quantity.')
+            return redirect('inventory:stock-move-create')
+
+        if move_type == StockMove.MoveType.OUT:
+            qty = -qty
+
+        try:
+            move = StockMove(
+                variant_id=variant_id,
+                warehouse_id=warehouse_id,
+                move_type=move_type,
+                quantity=qty,
+                reference=reference,
+                note=note,
+                created_by=request.user,
+            )
+            move.full_clean()
+            move.save()
+
+            # Update StockLevel cache
+            sl, _ = StockLevel.objects.get_or_create(
+                variant_id=variant_id,
+                warehouse_id=warehouse_id,
+            )
+            sl.quantity = (sl.quantity or 0) + qty
+            sl.save(update_fields=['quantity'])
+
+            messages.success(request, f'Stock move recorded — {move}')
+        except Exception as e:
+            messages.error(request, f'Error: {e}')
+            return redirect('inventory:stock-move-create')
+
+        return redirect('inventory:stock-levels')
