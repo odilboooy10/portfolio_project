@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}{{ order.reference }} — Purchase — ERP Core{% endblock %}
+{% block page_title %}{{ order.reference }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'purchase:po-list' %}">Purchase</a> / Orders
+    </span>
+    <h1 class="page-header__title">{{ order.reference }}</h1>
+  </div>
+  <div class="page-header__actions">
+    {% if order.status == 'rfq' %}
+    <form method="post" action="{% url 'purchase:po-confirm' order.pk %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-primary">
+        <i class="bi bi-check2-circle"></i> Confirm PO
+      </button>
+    </form>
+    {% endif %}
+    {% if order.status == 'confirmed' %}
+    <a href="{% url 'purchase:po-receive' order.pk %}" class="btn-erp-primary">
+      <i class="bi bi-box-arrow-in-down"></i> Receive Goods
+    </a>
+    {% endif %}
+    {% if order.status == 'received' %}
+    <form method="post" action="{% url 'purchase:po-billed' order.pk %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-primary">
+        <i class="bi bi-receipt"></i> Mark Billed
+      </button>
+    </form>
+    {% endif %}
+    {% if order.status == 'rfq' or order.status == 'confirmed' %}
+    <form method="post" action="{% url 'purchase:po-cancel' order.pk %}" style="display:inline;"
+          onsubmit="return confirm('Cancel this purchase order?')">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-danger">
+        <i class="bi bi-x-lg"></i> Cancel
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  {% for step_val, step_label in pipeline %}
+  {% if not forloop.first %}<span class="status-bar__arrow">›</span>{% endif %}
+  {% with is_active=order.status|lower == step_val %}
+  <span class="status-bar__step
+    {% if order.status == step_val %}status-bar__step--active
+    {% elif order.status == 'billed' and step_val != 'billed' %}status-bar__step--done
+    {% elif order.status == 'received' and step_val == 'rfq' or order.status == 'received' and step_val == 'confirmed' %}status-bar__step--done
+    {% elif order.status == 'confirmed' and step_val == 'rfq' %}status-bar__step--done
+    {% endif %}">
+    {{ step_label }}
+  </span>
+  {% endwith %}
+  {% endfor %}
+  {% if order.status == 'cancelled' %}
+  <span class="status-bar__arrow">›</span>
+  <span class="badge-status badge-cancelled" style="font-size:11px;">Cancelled</span>
+  {% endif %}
+</div>
+
+<div style="padding:var(--space-6);display:grid;grid-template-columns:1fr 300px;gap:var(--space-6);align-items:start;">
+
+  <!-- Left: PO lines -->
+  <div style="display:flex;flex-direction:column;gap:var(--space-5);">
+    <div class="panel">
+      <div class="panel-header">Order Lines</div>
+      {% if order.lines.all %}
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Product / SKU</th>
+            <th style="text-align:right;">Ordered</th>
+            <th style="text-align:right;">Received</th>
+            <th style="text-align:right;">Remaining</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in order.lines.all %}
+          <tr>
+            <td>
+              <div style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+                {{ line.variant.product.name }}
+              </div>
+              <div style="font-size:var(--text-xs);color:var(--color-text-muted);">{{ line.variant.sku }}</div>
+              {% if line.description %}
+              <div style="font-size:var(--text-xs);color:var(--color-text-muted);">{{ line.description }}</div>
+              {% endif %}
+            </td>
+            <td style="text-align:right;">{{ line.quantity|floatformat:0 }}</td>
+            <td style="text-align:right;color:var(--color-success);">
+              {{ line.received_qty|floatformat:0 }}
+            </td>
+            <td style="text-align:right;
+                color:{% if line.remaining_qty <= 0 %}var(--color-text-muted){% else %}var(--color-warning){% endif %};">
+              {{ line.remaining_qty|floatformat:0 }}
+            </td>
+            <td style="text-align:right;">${{ line.unit_price }}</td>
+            <td style="text-align:right;font-weight:var(--font-medium);">${{ line.line_total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+                  display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-1);">
+        <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+          Subtotal: <strong style="color:var(--color-text-primary);">${{ order.subtotal }}</strong>
+        </div>
+        {% if order.discount > 0 %}
+        <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+          Discount: <strong>{{ order.discount }}%</strong>
+        </div>
+        {% endif %}
+        <div style="font-size:var(--text-base);font-weight:var(--font-bold);color:var(--color-text-primary);
+                    border-top:1px solid var(--color-border);padding-top:var(--space-2);margin-top:var(--space-1);">
+          Total: ${{ order.total }}
+        </div>
+      </div>
+      {% else %}
+      <div style="padding:var(--space-10);text-align:center;color:var(--color-text-muted);">
+        No lines on this order.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Receipts -->
+    {% if order.receipts.all %}
+    <div class="panel">
+      <div class="panel-header">
+        Receipts
+        <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+          {{ order.receipts.count }} receipt{{ order.receipts.count|pluralize }}
+        </span>
+      </div>
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Warehouse</th>
+            <th>Received By</th>
+            <th>Date</th>
+            <th>Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for receipt in order.receipts.all %}
+          <tr>
+            <td style="font-weight:var(--font-medium);color:var(--color-primary);">
+              {{ receipt.reference }}
+            </td>
+            <td>{{ receipt.warehouse.name }}</td>
+            <td style="color:var(--color-text-muted);">{{ receipt.received_by.get_full_name|default:"—" }}</td>
+            <td style="color:var(--color-text-muted);">{{ receipt.received_at|date:"d M Y, H:i" }}</td>
+            <td style="color:var(--color-text-muted);">{{ receipt.lines.count }} line{{ receipt.lines.count|pluralize }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: PO details -->
+  <div class="panel">
+    <div class="panel-header">Details</div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+      <div>
+        <div class="form-label">Vendor</div>
+        <div style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+          {{ order.vendor.name }}
+        </div>
+        {% if order.vendor.email %}
+        <a href="mailto:{{ order.vendor.email }}"
+           style="font-size:var(--text-xs);color:var(--color-primary);text-decoration:none;">
+          {{ order.vendor.email }}
+        </a>
+        {% endif %}
+      </div>
+
+      <div>
+        <div class="form-label">Status</div>
+        <span class="badge-status badge-{{ order.status }}">{{ order.get_status_display }}</span>
+      </div>
+
+      {% if order.expected_delivery %}
+      <div>
+        <div class="form-label">Expected Delivery</div>
+        <div style="font-size:var(--text-sm);">{{ order.expected_delivery|date:"d M Y" }}</div>
+      </div>
+      {% endif %}
+
+      {% if order.confirmed_at %}
+      <div>
+        <div class="form-label">Confirmed At</div>
+        <div style="font-size:var(--text-sm);">{{ order.confirmed_at|date:"d M Y, H:i" }}</div>
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="form-label">Created</div>
+        <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+          {{ order.created_at|date:"d M Y" }}
+          {% if order.created_by %}by {{ order.created_by.get_full_name }}{% endif %}
+        </div>
+      </div>
+
+      {% if order.note %}
+      <div>
+        <div class="form-label">Note</div>
+        <div style="font-size:var(--text-sm);color:var(--color-text-secondary);">{{ order.note }}</div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

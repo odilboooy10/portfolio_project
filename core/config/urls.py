@@ -19,6 +19,7 @@ urlpatterns = [
     path('sales/',     include('apps.sales.urls_frontend',     namespace='sales')),
     path('crm/',       include('apps.crm.urls_frontend',       namespace='crm')),
     path('inventory/', include('apps.inventory.urls_frontend', namespace='inventory')),
+    path('purchase/',  include('apps.purchase.urls_frontend',  namespace='purchase')),
 
     # API v1
     path('api/v1/', include('config.api_urls')),

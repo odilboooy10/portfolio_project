@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Purchase Orders — ERP Core{% endblock %}
+{% block page_title %}Purchase Orders{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Purchase</span>
+    <h1 class="page-header__title">Purchase Orders</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'purchase:vendor-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-building"></i> Vendors
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:200px;max-width:320px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search reference or vendor…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="status" class="form-select" style="width:auto;">
+      <option value="">All statuses</option>
+      {% for val, label in statuses %}
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_status %}
+    <a href="{% url 'purchase:po-list' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="panel" style="border-radius:0;border-left:none;border-right:none;border-top:none;">
+  {% if orders %}
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Vendor</th>
+        <th>Status</th>
+        <th>Expected Delivery</th>
+        <th>Discount</th>
+        <th>Created</th>
+        <th>Created By</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr onclick="window.location='{% url 'purchase:po-detail' order.pk %}'">
+        <td>
+          <a href="{% url 'purchase:po-detail' order.pk %}"
+             style="color:var(--color-primary);font-weight:var(--font-medium);text-decoration:none;">
+            {{ order.reference }}
+          </a>
+        </td>
+        <td style="font-weight:var(--font-medium);">{{ order.vendor.name }}</td>
+        <td>
+          <span class="badge-status badge-{{ order.status }}">
+            {{ order.get_status_display }}
+          </span>
+        </td>
+        <td style="color:var(--color-text-muted);">{{ order.expected_delivery|date:"d M Y"|default:"—" }}</td>
+        <td style="color:var(--color-text-muted);">{{ order.discount }}%</td>
+        <td style="color:var(--color-text-muted);">{{ order.created_at|date:"d M Y" }}</td>
+        <td style="color:var(--color-text-muted);">{{ order.created_by.get_full_name|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="d-flex gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-cart-x" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No purchase orders found{% if q or current_status %} matching your filters{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
