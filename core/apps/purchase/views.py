@@ -5,6 +5,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.users.permissions import PurchasePermission
 from .models import Vendor, PurchaseOrder, PurchaseOrderLine, Receipt, ReceiptLine
 from .serializers import (
     VendorSerializer,
@@ -13,16 +14,9 @@ from .serializers import (
 )
 
 
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_manager
-
-
 class VendorViewSet(viewsets.ModelViewSet):
     serializer_class = VendorSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [PurchasePermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'company']
     ordering_fields = ['name', 'created_at']
@@ -36,7 +30,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
 
 class PurchaseOrderViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [PurchasePermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'vendor__name']
     ordering_fields = ['created_at', 'status']

@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.users.permissions import AccountingPermission
 from .models import Account, Journal, JournalEntry, Payment
 from .serializers import (
     AccountSerializer, JournalSerializer,
@@ -11,16 +12,9 @@ from .serializers import (
 from .tasks import send_payment_confirmation
 
 
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_manager
-
-
 class AccountViewSet(viewsets.ModelViewSet):
     serializer_class = AccountSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [AccountingPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['code', 'name']
     ordering_fields = ['code', 'name', 'account_type']
@@ -38,7 +32,7 @@ class AccountViewSet(viewsets.ModelViewSet):
 
 class JournalViewSet(viewsets.ModelViewSet):
     serializer_class = JournalSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [AccountingPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code']
 
@@ -51,7 +45,7 @@ class JournalViewSet(viewsets.ModelViewSet):
 
 
 class JournalEntryViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [AccountingPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'note']
     ordering_fields = ['date', 'created_at']
@@ -146,7 +140,7 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
 
 class PaymentViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [AccountingPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'note']
     ordering_fields = ['date', 'amount', 'created_at']
