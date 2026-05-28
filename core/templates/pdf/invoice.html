@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 13px; color: #1e2a3a; }
+
+    .page { padding: 48px; max-width: 800px; margin: auto; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+    .brand { font-size: 22px; font-weight: 700; color: #3b5bdb; letter-spacing: .02em; }
+    .brand span { color: #1e2a3a; }
+    .invoice-meta { text-align: right; }
+    .invoice-meta .ref { font-size: 20px; font-weight: 700; color: #1e2a3a; }
+    .invoice-meta .status { display: inline-block; margin-top: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .status-paid { background: #d3f9d8; color: #2f9e44; }
+    .status-issued { background: #fff3bf; color: #e67700; }
+    .status-draft { background: #e9ecef; color: #495057; }
+    .status-cancelled { background: #ffe3e3; color: #c92a2a; }
+
+    /* Parties */
+    .parties { display: flex; justify-content: space-between; margin-bottom: 32px; gap: 32px; }
+    .party { flex: 1; }
+    .party-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #8898aa; margin-bottom: 6px; }
+    .party-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .party-detail { color: #495057; line-height: 1.6; }
+
+    /* Dates */
+    .dates { display: flex; gap: 40px; margin-bottom: 32px; padding: 16px 0; border-top: 1px solid #e9ecef; border-bottom: 1px solid #e9ecef; }
+    .date-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #8898aa; margin-bottom: 4px; }
+    .date-item .value { font-weight: 600; }
+
+    /* Lines table */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    thead th { padding: 10px 12px; background: #f4f6fb; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8898aa; text-align: left; border-bottom: 2px solid #e9ecef; }
+    thead th.right { text-align: right; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+    tbody td.right { text-align: right; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Totals */
+    .totals { margin-left: auto; width: 280px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+    .totals-row.total { border-top: 2px solid #1e2a3a; margin-top: 4px; padding-top: 10px; font-size: 16px; font-weight: 700; }
+    .totals-row .label { color: #8898aa; }
+
+    /* Footer */
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e9ecef; font-size: 11px; color: #8898aa; text-align: center; }
+
+    .note-box { margin-bottom: 24px; padding: 12px 16px; background: #f8f9fa; border-left: 3px solid #3b5bdb; border-radius: 0 4px 4px 0; font-size: 12px; color: #495057; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">ERP <span>Core</span></div>
+    <div class="invoice-meta">
+      <div class="ref">{{ invoice.reference }}</div>
+      <span class="status status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+    </div>
+  </div>
+
+  <!-- Bill To / From -->
+  <div class="parties">
+    <div class="party">
+      <div class="party-label">From</div>
+      <div class="party-name">ERP Core Ltd.</div>
+      <div class="party-detail">accounts@erp.local</div>
+    </div>
+    <div class="party" style="text-align:right;">
+      <div class="party-label">Bill To</div>
+      <div class="party-name">{{ invoice.customer.name }}</div>
+      <div class="party-detail">
+        {{ invoice.customer.email }}<br>
+        {% if invoice.customer.company %}{{ invoice.customer.company }}<br>{% endif %}
+        {% if invoice.customer.phone %}{{ invoice.customer.phone }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Dates -->
+  <div class="dates">
+    <div class="date-item">
+      <div class="label">Issue Date</div>
+      <div class="value">{{ invoice.issue_date|date:"M d, Y"|default:"—" }}</div>
+    </div>
+    <div class="date-item">
+      <div class="label">Due Date</div>
+      <div class="value">{{ invoice.due_date|date:"M d, Y"|default:"—" }}</div>
+    </div>
+    {% if invoice.sale_order %}
+    <div class="date-item">
+      <div class="label">Sale Order</div>
+      <div class="value">{{ invoice.sale_order.reference }}</div>
+    </div>
+    {% endif %}
+    {% if invoice.paid_at %}
+    <div class="date-item">
+      <div class="label">Paid On</div>
+      <div class="value">{{ invoice.paid_at|date:"M d, Y" }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Line items -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:40%">Description</th>
+        <th>SKU</th>
+        <th class="right">Qty</th>
+        <th class="right">Unit Price</th>
+        <th class="right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines.all %}
+      <tr>
+        <td>
+          <strong>{{ line.variant.product.name }}</strong>
+          {% if line.description %}<br><span style="color:#8898aa;font-size:11px;">{{ line.description }}</span>{% endif %}
+        </td>
+        <td style="color:#8898aa;">{{ line.variant.sku }}</td>
+        <td class="right">{{ line.quantity }}</td>
+        <td class="right">${{ line.unit_price }}</td>
+        <td class="right">${{ line.line_total }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <div class="totals">
+    <div class="totals-row">
+      <span class="label">Subtotal</span>
+      <span>${{ invoice.subtotal }}</span>
+    </div>
+    {% if invoice.discount %}
+    <div class="totals-row">
+      <span class="label">Discount ({{ invoice.discount }}%)</span>
+      <span>-${{ invoice.subtotal|floatformat:2 }}</span>
+    </div>
+    {% endif %}
+    <div class="totals-row total">
+      <span>Total Due</span>
+      <span>${{ invoice.total }}</span>
+    </div>
+  </div>
+
+  {% if invoice.note %}
+  <div class="note-box" style="margin-top:24px;">{{ invoice.note }}</div>
+  {% endif %}
+
+  <!-- Footer -->
+  <div class="footer">
+    Thank you for your business · ERP Core Ltd. · accounts@erp.local
+  </div>
+
+</div>
+</body>
+</html>
