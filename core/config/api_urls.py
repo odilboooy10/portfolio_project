@@ -1,9 +1,24 @@
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+
+from apps.users.throttles import AuthRateThrottle
+
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [AuthRateThrottle]
+
+
+class ThrottledTokenRefreshView(TokenRefreshView):
+    throttle_classes = [AuthRateThrottle]
+
 
 urlpatterns = [
-    # Auth (Djoser + JWT)
+    # Auth (Djoser + JWT) — JWT token endpoints are rate-limited to 10/min per IP
     path('auth/', include('djoser.urls')),
+    path('auth/jwt/create/', ThrottledTokenObtainPairView.as_view(), name='jwt-create'),
+    path('auth/jwt/refresh/', ThrottledTokenRefreshView.as_view(), name='jwt-refresh'),
+    path('auth/jwt/verify/', TokenVerifyView.as_view(), name='jwt-verify'),
     path('auth/', include('djoser.urls.jwt')),
 
     # Inventory

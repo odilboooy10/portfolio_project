@@ -127,6 +127,16 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '30/min',    # unauthenticated (login page brute-force protection)
+        'user': '300/min',   # authenticated read traffic
+        'auth': '10/min',    # applied explicitly on auth endpoints
+        'write': '60/min',   # applied explicitly on write endpoints
+    },
 }
 
 SIMPLE_JWT = {
