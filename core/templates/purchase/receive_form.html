@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Receive Goods — {{ order.reference }} — ERP Core{% endblock %}
+{% block page_title %}Receive Goods{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'purchase:po-list' %}">Purchase</a> /
+      <a href="{% url 'purchase:po-detail' order.pk %}">{{ order.reference }}</a>
+    </span>
+    <h1 class="page-header__title">Receive Goods — {{ order.reference }}</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'purchase:po-detail' order.pk %}" class="btn-erp-ghost">
+      <i class="bi bi-arrow-left"></i> Back to PO
+    </a>
+  </div>
+</div>
+
+<div style="padding:var(--space-6);max-width:780px;">
+  <div class="panel">
+    <div class="panel-header">
+      Record goods received from {{ order.vendor.name }}
+    </div>
+
+    <form method="post" action="{% url 'purchase:po-receive' order.pk %}">
+      {% csrf_token %}
+
+      <!-- Warehouse + Note -->
+      <div class="form-section">
+        <p class="form-section__title">Receipt Details</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+          <div>
+            <label class="form-label" for="warehouse">
+              Destination Warehouse <span style="color:var(--color-danger);">*</span>
+            </label>
+            <select name="warehouse" id="warehouse" class="form-select" required>
+              <option value="">— Select warehouse —</option>
+              {% for wh in warehouses %}
+              <option value="{{ wh.pk }}">{{ wh.name }} ({{ wh.code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="note">Note</label>
+            <input type="text" name="note" id="note" class="form-control"
+                   placeholder="Optional note for this receipt">
+          </div>
+        </div>
+      </div>
+
+      <!-- Lines -->
+      <div class="form-section">
+        <p class="form-section__title">Lines to Receive</p>
+        <table class="erp-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th style="text-align:right;">Ordered</th>
+              <th style="text-align:right;">Already Received</th>
+              <th style="text-align:right;">Remaining</th>
+              <th style="text-align:right;min-width:120px;">Receiving Now</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in order.lines.all %}
+            <tr {% if line.remaining_qty <= 0 %}style="opacity:0.45;"{% endif %}>
+              <td style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+                {{ line.variant.product.name }}
+              </td>
+              <td>
+                <code style="font-size:var(--text-xs);background:#f1f5f9;padding:2px 6px;
+                             border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+                  {{ line.variant.sku }}
+                </code>
+              </td>
+              <td style="text-align:right;color:var(--color-text-muted);">
+                {{ line.quantity|floatformat:0 }}
+              </td>
+              <td style="text-align:right;color:var(--color-success);">
+                {{ line.received_qty|floatformat:0 }}
+              </td>
+              <td style="text-align:right;
+                  color:{% if line.remaining_qty <= 0 %}var(--color-text-muted){% else %}var(--color-warning){% endif %};
+                  font-weight:var(--font-medium);">
+                {{ line.remaining_qty|floatformat:0 }}
+              </td>
+              <td style="text-align:right;">
+                {% if line.remaining_qty > 0 %}
+                <input type="number"
+                       name="qty_{{ line.pk }}"
+                       class="form-control"
+                       style="width:100px;text-align:right;display:inline-block;"
+                       min="0"
+                       max="{{ line.remaining_qty }}"
+                       step="0.0001"
+                       value="{{ line.remaining_qty|floatformat:0 }}"
+                       placeholder="0">
+                {% else %}
+                <span style="font-size:var(--text-xs);color:var(--color-text-muted);">Complete</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--color-border);
+                  display:flex;gap:var(--space-3);align-items:center;">
+        <button type="submit" class="btn-erp-primary">
+          <i class="bi bi-box-arrow-in-down"></i> Confirm Receipt
+        </button>
+        <a href="{% url 'purchase:po-detail' order.pk %}" class="btn-erp-ghost">Cancel</a>
+        <span style="font-size:var(--text-xs);color:var(--color-text-muted);margin-left:auto;">
+          Stock moves will be created automatically on save.
+        </span>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
