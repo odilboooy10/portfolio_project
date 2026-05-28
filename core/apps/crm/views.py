@@ -4,6 +4,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.users.permissions import CRMPermission
 from .models import Pipeline, Lead, Activity
 from .serializers import (
     PipelineSerializer,
@@ -12,17 +13,10 @@ from .serializers import (
 )
 
 
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_manager
-
-
 class PipelineViewSet(viewsets.ModelViewSet):
     queryset = Pipeline.objects.prefetch_related('leads')
     serializer_class = PipelineSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [CRMPermission]
 
 
 class LeadViewSet(viewsets.ModelViewSet):

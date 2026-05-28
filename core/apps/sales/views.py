@@ -3,6 +3,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.users.permissions import SalesPermission
 from .models import Customer, Quotation, SaleOrder, Invoice
 from .serializers import (
     CustomerSerializer,
@@ -12,16 +13,9 @@ from .serializers import (
 )
 
 
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_manager
-
-
 class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'company']
     ordering_fields = ['name', 'created_at']
@@ -35,7 +29,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
 
 class QuotationViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'customer__name']
     ordering_fields = ['created_at', 'status']
@@ -120,7 +114,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
 
 class SaleOrderViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'customer__name']
     ordering_fields = ['confirmed_at', 'status']
@@ -188,7 +182,7 @@ class SaleOrderViewSet(viewsets.ModelViewSet):
 
 
 class InvoiceViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'customer__name']
     ordering_fields = ['created_at', 'due_date', 'status']

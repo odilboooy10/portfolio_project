@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from django.db.models import F
 
+from apps.users.permissions import InventoryPermission
 from .models import (
     Category, ProductAttribute, ProductAttributeValue,
     Product, ProductVariant, Warehouse, StockMove, StockLevel,
@@ -15,17 +16,10 @@ from .serializers import (
 )
 
 
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_manager
-
-
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.select_related('parent').prefetch_related('children')
     serializer_class = CategorySerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [InventoryPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
@@ -39,7 +33,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ProductAttributeViewSet(viewsets.ModelViewSet):
     queryset = ProductAttribute.objects.prefetch_related('values')
     serializer_class = ProductAttributeSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [InventoryPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
@@ -47,7 +41,7 @@ class ProductAttributeViewSet(viewsets.ModelViewSet):
 class ProductAttributeValueViewSet(viewsets.ModelViewSet):
     queryset = ProductAttributeValue.objects.select_related('attribute')
     serializer_class = ProductAttributeValueSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [InventoryPermission]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -58,7 +52,7 @@ class ProductAttributeValueViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [InventoryPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'sku', 'description']
     ordering_fields = ['name', 'base_price', 'created_at']
@@ -82,7 +76,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class ProductVariantViewSet(viewsets.ModelViewSet):
     queryset = ProductVariant.objects.select_related('product').prefetch_related('attribute_values', 'stock_levels__warehouse')
     serializer_class = ProductVariantSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [InventoryPermission]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -95,7 +89,7 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
 class WarehouseViewSet(viewsets.ModelViewSet):
     queryset = Warehouse.objects.all()
     serializer_class = WarehouseSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [InventoryPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code']
 
@@ -131,7 +125,7 @@ class StockMoveViewSet(viewsets.ModelViewSet):
             quantity=F('quantity') + move.quantity
         )
 
-    @action(detail=False, methods=['post'], url_path='adjust', permission_classes=[IsManagerOrReadOnly])
+    @action(detail=False, methods=['post'], url_path='adjust', permission_classes=[InventoryPermission])
     @transaction.atomic
     def adjust(self, request):
         """

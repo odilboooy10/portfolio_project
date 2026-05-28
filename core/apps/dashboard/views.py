@@ -8,17 +8,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 
-
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.is_manager
+from apps.users.permissions import IsManager
 
 
 class DashboardSummaryView(APIView):
     """
     Top-level KPI snapshot — one call, all the numbers.
     """
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManager]
 
     def get(self, request):
         from apps.sales.models import SaleOrder, Invoice
@@ -98,7 +95,7 @@ class DashboardSummaryView(APIView):
 
 class RevenueChartView(APIView):
     """Monthly revenue for the last N months (default 12)."""
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManager]
 
     def get(self, request):
         from apps.sales.models import Invoice
@@ -123,7 +120,7 @@ class RevenueChartView(APIView):
 
 class TopProductsView(APIView):
     """Top N products by quantity sold."""
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManager]
 
     def get(self, request):
         from apps.sales.models import SaleOrderLine
@@ -149,7 +146,7 @@ class TopProductsView(APIView):
 
 class LowStockView(APIView):
     """Variants with stock at or below the threshold (default ≤ 5)."""
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManager]
 
     def get(self, request):
         from apps.inventory.models import StockLevel
@@ -177,7 +174,7 @@ class LowStockView(APIView):
 
 class RecentActivityView(APIView):
     """Latest actions across all modules, merged and sorted by time."""
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManager]
 
     def get(self, request):
         from apps.sales.models import SaleOrder, Invoice
@@ -227,7 +224,7 @@ class RecentActivityView(APIView):
 
 class OrderPipelineView(APIView):
     """Sale order counts and revenue per status."""
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManager]
 
     def get(self, request):
         from apps.sales.models import SaleOrder
