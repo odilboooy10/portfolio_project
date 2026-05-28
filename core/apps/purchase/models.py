@@ -2,9 +2,10 @@ import uuid
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from apps.audit.mixins import AuditableMixin
 
 
-class Vendor(models.Model):
+class Vendor(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -24,7 +25,7 @@ class Vendor(models.Model):
         return self.name
 
 
-class PurchaseOrder(models.Model):
+class PurchaseOrder(AuditableMixin, models.Model):
     class Status(models.TextChoices):
         RFQ = 'rfq', 'Request for Quotation'
         CONFIRMED = 'confirmed', 'Purchase Order'
@@ -71,7 +72,7 @@ class PurchaseOrder(models.Model):
         return self.subtotal * (1 - self.discount / 100)
 
 
-class PurchaseOrderLine(models.Model):
+class PurchaseOrderLine(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='lines')
     variant = models.ForeignKey(
@@ -100,7 +101,7 @@ class PurchaseOrderLine(models.Model):
         return self.quantity - self.received_qty
 
 
-class Receipt(models.Model):
+class Receipt(AuditableMixin, models.Model):
     """Records goods received against a Purchase Order."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reference = models.CharField(max_length=50, unique=True, editable=False)
@@ -130,7 +131,7 @@ class Receipt(models.Model):
         super().save(*args, **kwargs)
 
 
-class ReceiptLine(models.Model):
+class ReceiptLine(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     receipt = models.ForeignKey(Receipt, on_delete=models.CASCADE, related_name='lines')
     purchase_order_line = models.ForeignKey(
