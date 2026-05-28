@@ -44,6 +44,7 @@ LOCAL_APPS = [
     'apps.accounting.apps.AccountingConfig',
     'apps.dashboard.apps.DashboardConfig',
     'apps.audit.apps.AuditConfig',
+    'apps.webhooks.apps.WebhooksConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
