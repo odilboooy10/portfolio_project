@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.users.permissions import SalesPermission
+from .tasks import send_invoice_pdf_email
 from .models import Customer, Quotation, SaleOrder, Invoice
 from .serializers import (
     CustomerSerializer,
@@ -219,6 +220,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         invoice.status = Invoice.Status.ISSUED
         invoice.issue_date = timezone.now().date()
         invoice.save()
+        send_invoice_pdf_email.delay(str(invoice.id))
         return Response(InvoiceDetailSerializer(invoice, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
@@ -254,3 +256,18 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         invoice.status = Invoice.Status.CANCELLED
         invoice.save()
         return Response(InvoiceDetailSerializer(invoice, context={'request': request}).data)
+
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def pdf(self, request, pk=None):
+        """Render invoice as PDF and return as a download."""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        import weasyprint
+
+        invoice = self.get_object()
+        html = render_to_string('pdf/invoice.html', {'invoice': invoice}, request=request)
+        pdf_bytes = weasyprint.HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.reference}.pdf"'
+        return response
