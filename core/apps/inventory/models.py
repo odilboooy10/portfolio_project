@@ -1,9 +1,10 @@
 import uuid
 from django.db import models
 from django.core.exceptions import ValidationError
+from apps.audit.mixins import AuditableMixin
 
 
-class Category(models.Model):
+class Category(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     parent = models.ForeignKey(
@@ -23,7 +24,7 @@ class Category(models.Model):
         return self.name
 
 
-class ProductAttribute(models.Model):
+class ProductAttribute(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)  # e.g. "Color", "Size"
 
@@ -34,7 +35,7 @@ class ProductAttribute(models.Model):
         return self.name
 
 
-class ProductAttributeValue(models.Model):
+class ProductAttributeValue(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     attribute = models.ForeignKey(ProductAttribute, on_delete=models.CASCADE, related_name='values')
     value = models.CharField(max_length=100)  # e.g. "Red", "XL"
@@ -47,7 +48,7 @@ class ProductAttributeValue(models.Model):
         return f"{self.attribute.name}: {self.value}"
 
 
-class Product(models.Model):
+class Product(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     sku = models.CharField(max_length=100, unique=True)
@@ -69,7 +70,7 @@ class Product(models.Model):
         return f"{self.name} ({self.sku})"
 
 
-class ProductVariant(models.Model):
+class ProductVariant(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     sku = models.CharField(max_length=100, unique=True)
@@ -90,7 +91,7 @@ class ProductVariant(models.Model):
         return self.price_override if self.price_override is not None else self.product.base_price
 
 
-class Warehouse(models.Model):
+class Warehouse(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=20, unique=True)
@@ -105,7 +106,7 @@ class Warehouse(models.Model):
         return f"{self.name} ({self.code})"
 
 
-class StockMove(models.Model):
+class StockMove(AuditableMixin, models.Model):
     """
     Append-only ledger of every inventory movement.
     Positive quantity = stock in; negative = stock out.
@@ -141,7 +142,7 @@ class StockMove(models.Model):
             raise ValidationError("Stock IN moves must have a positive quantity.")
 
 
-class StockLevel(models.Model):
+class StockLevel(AuditableMixin, models.Model):
     """
     Denormalised current stock — updated whenever a StockMove is saved.
     Source of truth is StockMove; this is a fast-read cache.

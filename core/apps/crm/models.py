@@ -2,9 +2,10 @@ import uuid
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from apps.audit.mixins import AuditableMixin
 
 
-class Pipeline(models.Model):
+class Pipeline(AuditableMixin, models.Model):
     """Kanban stage in the sales pipeline."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
@@ -24,7 +25,7 @@ class Pipeline(models.Model):
         return self.name
 
 
-class Lead(models.Model):
+class Lead(AuditableMixin, models.Model):
     class Priority(models.TextChoices):
         LOW = 'low', 'Low'
         MEDIUM = 'medium', 'Medium'
@@ -89,7 +90,7 @@ class Lead(models.Model):
         return self.expected_revenue * (self.probability / 100)
 
 
-class Activity(models.Model):
+class Activity(AuditableMixin, models.Model):
     class ActivityType(models.TextChoices):
         CALL = 'call', 'Phone Call'
         EMAIL = 'email', 'Email'

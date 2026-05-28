@@ -1,9 +1,10 @@
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from apps.audit.mixins import AuditableMixin
 
 
-class User(AbstractUser):
+class User(AuditableMixin, AbstractUser):
     """
     Custom user model. Uses email as the login field.
     """

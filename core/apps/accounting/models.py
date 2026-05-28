@@ -2,9 +2,10 @@ import uuid
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from apps.audit.mixins import AuditableMixin
 
 
-class Account(models.Model):
+class Account(AuditableMixin, models.Model):
     """Chart of accounts entry."""
     class AccountType(models.TextChoices):
         ASSET = 'asset', 'Asset'
@@ -31,7 +32,7 @@ class Account(models.Model):
         return f"{self.code} — {self.name}"
 
 
-class Journal(models.Model):
+class Journal(AuditableMixin, models.Model):
     """Groups journal entries by type (sales, purchases, bank, cash, etc.)."""
     class JournalType(models.TextChoices):
         SALES = 'sales', 'Sales'
@@ -56,7 +57,7 @@ class Journal(models.Model):
         return f"{self.code} — {self.name}"
 
 
-class JournalEntry(models.Model):
+class JournalEntry(AuditableMixin, models.Model):
     """Double-entry bookkeeping entry. Must balance (debits == credits)."""
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
@@ -112,7 +113,7 @@ class JournalEntry(models.Model):
         return self.total_debit == self.total_credit
 
 
-class JournalEntryLine(models.Model):
+class JournalEntryLine(AuditableMixin, models.Model):
     """Single debit or credit line within a journal entry."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name='lines')
@@ -134,7 +135,7 @@ class JournalEntryLine(models.Model):
         return f"{self.account} | Dr {self.debit} | Cr {self.credit}"
 
 
-class Payment(models.Model):
+class Payment(AuditableMixin, models.Model):
     """Records a payment in or out, linked to an invoice or purchase order."""
     class PaymentType(models.TextChoices):
         INBOUND = 'inbound', 'Inbound (Customer)'

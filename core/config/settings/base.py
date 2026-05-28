@@ -43,6 +43,7 @@ LOCAL_APPS = [
     'apps.purchase.apps.PurchaseConfig',
     'apps.accounting.apps.AccountingConfig',
     'apps.dashboard.apps.DashboardConfig',
+    'apps.audit.apps.AuditConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -56,6 +57,7 @@ MIDDLEWARE = [
     'django_htmx.middleware.HtmxMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.audit.middleware.AuditUserMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
