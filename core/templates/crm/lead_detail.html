@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.name }} — CRM — ERP Core{% endblock %}
+{% block page_title %}{{ lead.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'crm:lead-list' %}">CRM</a> /
+      <a href="{% url 'crm:kanban' %}">Pipeline</a>
+    </span>
+    <h1 class="page-header__title">{{ lead.name }}</h1>
+  </div>
+  <div class="page-header__actions">
+    {% if not lead.is_won and not lead.is_lost %}
+    <form method="post" action="{% url 'crm:lead-win' lead.pk %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-erp-primary">
+        <i class="bi bi-trophy"></i> Mark Won
+      </button>
+    </form>
+    <button type="button" class="btn-erp-danger"
+            onclick="document.getElementById('lose-form').style.display='block';this.style.display='none';">
+      <i class="bi bi-x-circle"></i> Mark Lost
+    </button>
+    {% elif lead.is_won %}
+    <span class="badge-status badge-won" style="font-size:13px;padding:4px 12px;">
+      <i class="bi bi-trophy-fill"></i> Won
+    </span>
+    {% elif lead.is_lost %}
+    <span class="badge-status badge-lost" style="font-size:13px;padding:4px 12px;">
+      <i class="bi bi-x-circle-fill"></i> Lost
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Mark lost form (hidden by default) -->
+{% if not lead.is_won and not lead.is_lost %}
+<div id="lose-form" style="display:none;padding:var(--space-4) var(--space-6);
+     background:var(--color-danger-light);border-bottom:1px solid #fecaca;">
+  <form method="post" action="{% url 'crm:lead-lose' lead.pk %}" class="d-flex align-items-end gap-3">
+    {% csrf_token %}
+    <div style="flex:1;">
+      <label class="form-label">Reason for losing (optional)</label>
+      <input type="text" name="reason" class="form-control" placeholder="e.g. Budget constraints, chose competitor…">
+    </div>
+    <button type="submit" class="btn-erp-danger">Confirm Lost</button>
+    <button type="button" class="btn-erp-ghost"
+            onclick="document.getElementById('lose-form').style.display='none';
+                     document.querySelector('.btn-erp-danger').style.display='inline-flex';">
+      Cancel
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Pipeline stage selector -->
+{% if not lead.is_won and not lead.is_lost %}
+<div style="padding:var(--space-3) var(--space-6);background:var(--color-card-bg);
+            border-bottom:1px solid var(--color-border);display:flex;align-items:center;gap:var(--space-4);">
+  <span style="font-size:var(--text-xs);color:var(--color-text-muted);font-weight:var(--font-semi);
+               text-transform:uppercase;letter-spacing:0.05em;">Stage:</span>
+  <form method="post" action="{% url 'crm:lead-move-stage' lead.pk %}" class="d-flex align-items-center gap-2">
+    {% csrf_token %}
+    <select name="pipeline_id" class="form-select" style="width:auto;font-size:var(--text-sm);"
+            onchange="this.form.submit()">
+      <option value="">— No stage —</option>
+      {% for p in pipelines %}
+      <option value="{{ p.pk }}" {% if lead.pipeline.pk == p.pk %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+{% endif %}
+
+<!-- Body -->
+<div style="padding:var(--space-6);display:grid;grid-template-columns:1fr 320px;gap:var(--space-6);align-items:start;">
+
+  <!-- Left: Activities -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">
+        Activities
+        <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+          {{ lead.activities.count }} total
+        </span>
+      </div>
+      {% if lead.activities.all %}
+      <div style="padding:var(--space-2) 0;">
+        {% for activity in lead.activities.all %}
+        <div style="display:flex;gap:var(--space-3);padding:var(--space-3) var(--space-5);
+                    border-bottom:1px solid var(--color-border);
+                    {% if activity.is_done %}opacity:0.55;{% endif %}">
+          <div style="width:32px;height:32px;border-radius:var(--radius-md);flex-shrink:0;
+                      background:var(--color-primary-light);color:var(--color-primary);
+                      display:flex;align-items:center;justify-content:center;font-size:14px;margin-top:2px;">
+            {% if activity.activity_type == 'call' %}<i class="bi bi-telephone"></i>
+            {% elif activity.activity_type == 'email' %}<i class="bi bi-envelope"></i>
+            {% elif activity.activity_type == 'meeting' %}<i class="bi bi-calendar-event"></i>
+            {% elif activity.activity_type == 'task' %}<i class="bi bi-check2-square"></i>
+            {% elif activity.activity_type == 'demo' %}<i class="bi bi-display"></i>
+            {% else %}<i class="bi bi-sticky"></i>{% endif %}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);">
+              <span style="font-size:var(--text-sm);font-weight:var(--font-medium);color:var(--color-text-primary);">
+                {{ activity.title }}
+                {% if activity.is_done %}
+                <i class="bi bi-check-circle-fill" style="color:var(--color-success);margin-left:4px;font-size:12px;"></i>
+                {% endif %}
+              </span>
+              <span style="font-size:10px;color:var(--color-text-muted);white-space:nowrap;">
+                {{ activity.created_at|date:"d M Y" }}
+              </span>
+            </div>
+            {% if activity.note %}
+            <p style="font-size:var(--text-xs);color:var(--color-text-muted);margin:var(--space-1) 0 0;">
+              {{ activity.note }}
+            </p>
+            {% endif %}
+            {% if activity.due_date %}
+            <div style="font-size:10px;color:var(--color-text-muted);margin-top:var(--space-1);">
+              <i class="bi bi-clock"></i> Due {{ activity.due_date|date:"d M Y, H:i" }}
+            </div>
+            {% endif %}
+            {% if activity.assigned_to %}
+            <div style="font-size:10px;color:var(--color-text-muted);margin-top:2px;">
+              <i class="bi bi-person"></i> {{ activity.assigned_to.get_full_name }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="padding:var(--space-10);text-align:center;color:var(--color-text-muted);">
+        <i class="bi bi-calendar-x" style="font-size:2rem;display:block;margin-bottom:var(--space-2);"></i>
+        No activities yet.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: Lead details -->
+  <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+    <div class="panel">
+      <div class="panel-header">Lead Details</div>
+      <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+        <div>
+          <div class="form-label">Status</div>
+          {% if lead.is_won %}
+            <span class="badge-status badge-won">Won</span>
+            <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;">
+              {{ lead.won_at|date:"d M Y, H:i" }}
+            </div>
+          {% elif lead.is_lost %}
+            <span class="badge-status badge-lost">Lost</span>
+            {% if lead.lost_reason %}
+            <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;">
+              {{ lead.lost_reason }}
+            </div>
+            {% endif %}
+          {% else %}
+            <span class="badge-status badge-in-progress">Active</span>
+          {% endif %}
+        </div>
+
+        <div>
+          <div class="form-label">Pipeline Stage</div>
+          <div style="font-size:var(--text-sm);">{{ lead.pipeline.name|default:"—" }}</div>
+        </div>
+
+        <div>
+          <div class="form-label">Priority</div>
+          {% if lead.priority == 'high' %}
+            <span style="color:var(--color-danger);font-size:var(--text-sm);font-weight:var(--font-medium);">
+              <i class="bi bi-arrow-up-circle-fill"></i> High
+            </span>
+          {% elif lead.priority == 'medium' %}
+            <span style="color:var(--color-warning);font-size:var(--text-sm);font-weight:var(--font-medium);">
+              <i class="bi bi-dash-circle-fill"></i> Medium
+            </span>
+          {% else %}
+            <span style="color:var(--color-text-muted);font-size:var(--text-sm);">
+              <i class="bi bi-arrow-down-circle"></i> Low
+            </span>
+          {% endif %}
+        </div>
+
+        <div>
+          <div class="form-label">Expected Revenue</div>
+          <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-text-primary);">
+            ${{ lead.expected_revenue|floatformat:2 }}
+          </div>
+        </div>
+
+        <div>
+          <div class="form-label">Win Probability</div>
+          <div style="display:flex;align-items:center;gap:var(--space-3);">
+            <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;">
+              <div style="height:6px;width:{{ lead.probability|floatformat:0 }}%;background:var(--color-primary);border-radius:3px;"></div>
+            </div>
+            <span style="font-size:var(--text-sm);font-weight:var(--font-semi);color:var(--color-text-primary);white-space:nowrap;">
+              {{ lead.probability|floatformat:0 }}%
+            </span>
+          </div>
+        </div>
+
+        {% if lead.expected_close_date %}
+        <div>
+          <div class="form-label">Expected Close</div>
+          <div style="font-size:var(--text-sm);">{{ lead.expected_close_date|date:"d M Y" }}</div>
+        </div>
+        {% endif %}
+
+        <div>
+          <div class="form-label">Assigned To</div>
+          <div style="font-size:var(--text-sm);">{{ lead.assigned_to.get_full_name|default:"Unassigned" }}</div>
+        </div>
+
+        <div>
+          <div class="form-label">Created</div>
+          <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+            {{ lead.created_at|date:"d M Y" }} by {{ lead.created_by.get_full_name|default:"—" }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Contact</div>
+      <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-3);">
+        {% if lead.contact_name %}
+        <div>
+          <div class="form-label">Name</div>
+          <div style="font-size:var(--text-sm);font-weight:var(--font-medium);">{{ lead.contact_name }}</div>
+        </div>
+        {% endif %}
+        {% if lead.company %}
+        <div>
+          <div class="form-label">Company</div>
+          <div style="font-size:var(--text-sm);">{{ lead.company }}</div>
+        </div>
+        {% endif %}
+        {% if lead.contact_email %}
+        <div>
+          <div class="form-label">Email</div>
+          <a href="mailto:{{ lead.contact_email }}"
+             style="font-size:var(--text-sm);color:var(--color-primary);text-decoration:none;">
+            {{ lead.contact_email }}
+          </a>
+        </div>
+        {% endif %}
+        {% if lead.contact_phone %}
+        <div>
+          <div class="form-label">Phone</div>
+          <div style="font-size:var(--text-sm);">{{ lead.contact_phone }}</div>
+        </div>
+        {% endif %}
+        {% if lead.customer %}
+        <div>
+          <div class="form-label">Linked Customer</div>
+          <div style="font-size:var(--text-sm);color:var(--color-primary);">{{ lead.customer.name }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if lead.description %}
+    <div class="panel">
+      <div class="panel-header">Description</div>
+      <div class="panel-body" style="font-size:var(--text-sm);color:var(--color-text-secondary);
+                                      line-height:var(--leading-relaxed);">
+        {{ lead.description }}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
