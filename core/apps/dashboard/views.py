@@ -8,13 +8,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 
+from drf_spectacular.utils import extend_schema
+
 from apps.users.permissions import IsManager
 
 
+@extend_schema(responses={200: dict})
 class DashboardSummaryView(APIView):
-    """
-    Top-level KPI snapshot — one call, all the numbers.
-    """
     permission_classes = [IsManager]
 
     def get(self, request):
@@ -93,8 +93,8 @@ class DashboardSummaryView(APIView):
         })
 
 
+@extend_schema(responses={200: dict})
 class RevenueChartView(APIView):
-    """Monthly revenue for the last N months (default 12)."""
     permission_classes = [IsManager]
 
     def get(self, request):
@@ -118,8 +118,8 @@ class RevenueChartView(APIView):
         ])
 
 
+@extend_schema(responses={200: dict})
 class TopProductsView(APIView):
-    """Top N products by quantity sold."""
     permission_classes = [IsManager]
 
     def get(self, request):
@@ -144,8 +144,8 @@ class TopProductsView(APIView):
         return Response(list(data))
 
 
+@extend_schema(responses={200: dict})
 class LowStockView(APIView):
-    """Variants with stock at or below the threshold (default ≤ 5)."""
     permission_classes = [IsManager]
 
     def get(self, request):
@@ -172,8 +172,8 @@ class LowStockView(APIView):
         ])
 
 
+@extend_schema(responses={200: dict})
 class RecentActivityView(APIView):
-    """Latest actions across all modules, merged and sorted by time."""
     permission_classes = [IsManager]
 
     def get(self, request):
@@ -222,8 +222,8 @@ class RecentActivityView(APIView):
         return Response(events[:limit])
 
 
+@extend_schema(responses={200: dict})
 class OrderPipelineView(APIView):
-    """Sale order counts and revenue per status."""
     permission_classes = [IsManager]
 
     def get(self, request):

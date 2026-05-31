@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Vendor, PurchaseOrder, PurchaseOrderLine, Receipt, ReceiptLine
 
+_MONEY = dict(max_digits=12, decimal_places=2, read_only=True)
+
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,8 +16,8 @@ class VendorSerializer(serializers.ModelSerializer):
 
 
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):
-    line_total = serializers.ReadOnlyField()
-    remaining_qty = serializers.ReadOnlyField()
+    line_total = serializers.DecimalField(**_MONEY)
+    remaining_qty = serializers.DecimalField(**_MONEY)
     variant_sku = serializers.ReadOnlyField(source='variant.sku')
     product_name = serializers.ReadOnlyField(source='variant.product.name')
 
@@ -31,7 +33,7 @@ class PurchaseOrderLineSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderListSerializer(serializers.ModelSerializer):
     vendor_name = serializers.ReadOnlyField(source='vendor.name')
-    total = serializers.ReadOnlyField()
+    total = serializers.DecimalField(**_MONEY)
 
     class Meta:
         model = PurchaseOrder
@@ -45,8 +47,8 @@ class PurchaseOrderListSerializer(serializers.ModelSerializer):
 class PurchaseOrderDetailSerializer(serializers.ModelSerializer):
     vendor_name = serializers.ReadOnlyField(source='vendor.name')
     lines = PurchaseOrderLineSerializer(many=True)
-    subtotal = serializers.ReadOnlyField()
-    total = serializers.ReadOnlyField()
+    subtotal = serializers.DecimalField(**_MONEY)
+    total = serializers.DecimalField(**_MONEY)
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:

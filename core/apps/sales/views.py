@@ -15,6 +15,7 @@ from .serializers import (
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
+    queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

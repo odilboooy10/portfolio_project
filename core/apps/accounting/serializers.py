@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from .models import Account, Journal, JournalEntry, JournalEntryLine, Payment
 
+_MONEY = dict(max_digits=12, decimal_places=2, read_only=True)
+
 
 class AccountSerializer(serializers.ModelSerializer):
-    account_type_display = serializers.ReadOnlyField(source='get_account_type_display')
+    account_type_display = serializers.CharField(source='get_account_type_display', read_only=True)
     parent_name = serializers.ReadOnlyField(source='parent.name')
 
     class Meta:
@@ -16,7 +18,7 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class JournalSerializer(serializers.ModelSerializer):
-    journal_type_display = serializers.ReadOnlyField(source='get_journal_type_display')
+    journal_type_display = serializers.CharField(source='get_journal_type_display', read_only=True)
     default_account_name = serializers.ReadOnlyField(source='default_account.name')
 
     class Meta:
@@ -40,8 +42,8 @@ class JournalEntryLineSerializer(serializers.ModelSerializer):
 
 class JournalEntryListSerializer(serializers.ModelSerializer):
     journal_name = serializers.ReadOnlyField(source='journal.name')
-    total_debit = serializers.ReadOnlyField()
-    is_balanced = serializers.ReadOnlyField()
+    total_debit = serializers.DecimalField(**_MONEY)
+    is_balanced = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = JournalEntry
@@ -55,9 +57,9 @@ class JournalEntryListSerializer(serializers.ModelSerializer):
 class JournalEntryDetailSerializer(serializers.ModelSerializer):
     journal_name = serializers.ReadOnlyField(source='journal.name')
     lines = JournalEntryLineSerializer(many=True)
-    total_debit = serializers.ReadOnlyField()
-    total_credit = serializers.ReadOnlyField()
-    is_balanced = serializers.ReadOnlyField()
+    total_debit = serializers.DecimalField(**_MONEY)
+    total_credit = serializers.DecimalField(**_MONEY)
+    is_balanced = serializers.BooleanField(read_only=True)
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Pipeline, Lead, Activity
 
+_MONEY = dict(max_digits=12, decimal_places=2, read_only=True)
+
 
 class PipelineSerializer(serializers.ModelSerializer):
     lead_count = serializers.SerializerMethodField()
@@ -10,13 +12,13 @@ class PipelineSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'order', 'probability', 'is_won', 'is_lost', 'lead_count')
         read_only_fields = ('id',)
 
-    def get_lead_count(self, obj):
+    def get_lead_count(self, obj) -> int:
         return obj.leads.count()
 
 
 class ActivitySerializer(serializers.ModelSerializer):
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    assigned_to_name = serializers.ReadOnlyField(source='assigned_to.full_name')
+    assigned_to_name = serializers.CharField(source='assigned_to.full_name', read_only=True, allow_null=True, default=None)
 
     class Meta:
         model = Activity
@@ -31,10 +33,10 @@ class ActivitySerializer(serializers.ModelSerializer):
 
 class LeadListSerializer(serializers.ModelSerializer):
     pipeline_name = serializers.ReadOnlyField(source='pipeline.name')
-    assigned_to_name = serializers.ReadOnlyField(source='assigned_to.full_name')
-    weighted_revenue = serializers.ReadOnlyField()
-    is_won = serializers.ReadOnlyField()
-    is_lost = serializers.ReadOnlyField()
+    assigned_to_name = serializers.CharField(source='assigned_to.full_name', read_only=True, allow_null=True, default=None)
+    weighted_revenue = serializers.DecimalField(**_MONEY)
+    is_won = serializers.BooleanField(read_only=True)
+    is_lost = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Lead
@@ -49,12 +51,12 @@ class LeadListSerializer(serializers.ModelSerializer):
 
 class LeadDetailSerializer(serializers.ModelSerializer):
     pipeline_name = serializers.ReadOnlyField(source='pipeline.name')
-    assigned_to_name = serializers.ReadOnlyField(source='assigned_to.full_name')
+    assigned_to_name = serializers.CharField(source='assigned_to.full_name', read_only=True, allow_null=True, default=None)
     customer_name = serializers.ReadOnlyField(source='customer.name')
     activities = ActivitySerializer(many=True, read_only=True)
-    weighted_revenue = serializers.ReadOnlyField()
-    is_won = serializers.ReadOnlyField()
-    is_lost = serializers.ReadOnlyField()
+    weighted_revenue = serializers.DecimalField(**_MONEY)
+    is_won = serializers.BooleanField(read_only=True)
+    is_lost = serializers.BooleanField(read_only=True)
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:

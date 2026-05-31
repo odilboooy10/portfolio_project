@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Customer, Quotation, QuotationLine, SaleOrder, SaleOrderLine, Invoice, InvoiceLine
 
+_MONEY = dict(max_digits=12, decimal_places=2, read_only=True)
+
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,7 +17,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 # ── Quotation ─────────────────────────────────────────────────────────────────
 
 class QuotationLineSerializer(serializers.ModelSerializer):
-    line_total = serializers.ReadOnlyField()
+    line_total = serializers.DecimalField(**_MONEY)
     variant_sku = serializers.ReadOnlyField(source='variant.sku')
     product_name = serializers.ReadOnlyField(source='variant.product.name')
 
@@ -30,7 +32,7 @@ class QuotationLineSerializer(serializers.ModelSerializer):
 
 class QuotationListSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
-    total = serializers.ReadOnlyField()
+    total = serializers.DecimalField(**_MONEY)
 
     class Meta:
         model = Quotation
@@ -44,8 +46,8 @@ class QuotationListSerializer(serializers.ModelSerializer):
 class QuotationDetailSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
     lines = QuotationLineSerializer(many=True)
-    subtotal = serializers.ReadOnlyField()
-    total = serializers.ReadOnlyField()
+    subtotal = serializers.DecimalField(**_MONEY)
+    total = serializers.DecimalField(**_MONEY)
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
@@ -79,7 +81,7 @@ class QuotationDetailSerializer(serializers.ModelSerializer):
 # ── Sale Order ────────────────────────────────────────────────────────────────
 
 class SaleOrderLineSerializer(serializers.ModelSerializer):
-    line_total = serializers.ReadOnlyField()
+    line_total = serializers.DecimalField(**_MONEY)
     variant_sku = serializers.ReadOnlyField(source='variant.sku')
     product_name = serializers.ReadOnlyField(source='variant.product.name')
 
@@ -94,7 +96,7 @@ class SaleOrderLineSerializer(serializers.ModelSerializer):
 
 class SaleOrderListSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
-    total = serializers.ReadOnlyField()
+    total = serializers.DecimalField(**_MONEY)
 
     class Meta:
         model = SaleOrder
@@ -108,8 +110,8 @@ class SaleOrderListSerializer(serializers.ModelSerializer):
 class SaleOrderDetailSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
     lines = SaleOrderLineSerializer(many=True)
-    subtotal = serializers.ReadOnlyField()
-    total = serializers.ReadOnlyField()
+    subtotal = serializers.DecimalField(**_MONEY)
+    total = serializers.DecimalField(**_MONEY)
     confirmed_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
@@ -143,7 +145,7 @@ class SaleOrderDetailSerializer(serializers.ModelSerializer):
 # ── Invoice ───────────────────────────────────────────────────────────────────
 
 class InvoiceLineSerializer(serializers.ModelSerializer):
-    line_total = serializers.ReadOnlyField()
+    line_total = serializers.DecimalField(**_MONEY)
     variant_sku = serializers.ReadOnlyField(source='variant.sku')
     product_name = serializers.ReadOnlyField(source='variant.product.name')
 
@@ -158,7 +160,7 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
 
 class InvoiceListSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
-    total = serializers.ReadOnlyField()
+    total = serializers.DecimalField(**_MONEY)
 
     class Meta:
         model = Invoice
@@ -172,8 +174,8 @@ class InvoiceListSerializer(serializers.ModelSerializer):
 class InvoiceDetailSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
     lines = InvoiceLineSerializer(many=True)
-    subtotal = serializers.ReadOnlyField()
-    total = serializers.ReadOnlyField()
+    subtotal = serializers.DecimalField(**_MONEY)
+    total = serializers.DecimalField(**_MONEY)
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:

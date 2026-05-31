@@ -15,6 +15,7 @@ from .serializers import (
 
 
 class VendorViewSet(viewsets.ModelViewSet):
+    queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
     permission_classes = [PurchasePermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

@@ -158,6 +158,14 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'ERP Core API',
     'DESCRIPTION': 'Full-featured ERP system API',
     'VERSION': '1.0.0',
+    'ENUM_NAME_OVERRIDES': {
+        'QuotationStatusEnum':     'apps.sales.models.Quotation.Status',
+        'SaleOrderStatusEnum':     'apps.sales.models.SaleOrder.Status',
+        'InvoiceStatusEnum':       'apps.sales.models.Invoice.Status',
+        'PurchaseOrderStatusEnum': 'apps.purchase.models.PurchaseOrder.Status',
+        'JournalEntryStatusEnum':  'apps.accounting.models.JournalEntry.Status',
+    },
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')

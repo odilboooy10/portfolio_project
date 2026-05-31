@@ -13,6 +13,7 @@ from .tasks import send_payment_confirmation
 
 
 class AccountViewSet(viewsets.ModelViewSet):
+    queryset = Account.objects.all()
     serializer_class = AccountSerializer
     permission_classes = [AccountingPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

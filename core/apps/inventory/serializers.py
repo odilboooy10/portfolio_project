@@ -4,6 +4,8 @@ from .models import (
     Product, ProductVariant, Warehouse, StockMove, StockLevel,
 )
 
+_MONEY = dict(max_digits=12, decimal_places=2, read_only=True)
+
 
 class CategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
@@ -13,7 +15,7 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'parent', 'description', 'created_at', 'children')
         read_only_fields = ('id', 'created_at')
 
-    def get_children(self, obj):
+    def get_children(self, obj) -> list:
         return CategorySerializer(obj.children.all(), many=True).data
 
 
@@ -51,7 +53,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         write_only=True,
         source='attribute_values',
     )
-    effective_price = serializers.ReadOnlyField()
+    effective_price = serializers.DecimalField(**_MONEY)
     stock_levels = StockLevelSerializer(many=True, read_only=True)
 
     class Meta:

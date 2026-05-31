@@ -52,6 +52,7 @@ class ProductAttributeValueViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
     permission_classes = [InventoryPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'sku', 'description']
