@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Kanban — CRM — ERP Core{% endblock %}
-{% block page_title %}CRM — Pipeline{% endblock %}
+{% block title %}Kanban — CRM — ERP Core{% endblock title %}
+{% block page_title %}CRM — Pipeline{% endblock page_title %}
 
 {% block extra_head %}
 <style>
@@ -101,6 +101,7 @@
   .priority-high   { background: var(--color-danger); }
   .priority-medium { background: var(--color-warning); }
   .priority-low    { background: var(--color-text-muted); }
+  .stage-icon { margin-right: 4px; }
   .kanban-empty {
     padding: var(--space-6);
     text-align: center;
@@ -108,7 +109,7 @@
     font-size: var(--text-xs);
   }
 </style>
-{% endblock %}
+{% endblock extra_head %}
 
 {% block content %}
 <div class="page-header">
@@ -128,11 +129,11 @@
   <div class="kanban-col {% if pipeline.is_won %}kanban-col__won{% elif pipeline.is_lost %}kanban-col__lost{% endif %}">
     <div class="kanban-col__header">
       <span class="kanban-col__title">
-        {% if pipeline.is_won %}<i class="bi bi-trophy-fill" style="margin-right:4px;"></i>{% endif %}
-        {% if pipeline.is_lost %}<i class="bi bi-x-circle" style="margin-right:4px;"></i>{% endif %}
+        {% if pipeline.is_won %}<i class="bi bi-trophy-fill stage-icon"></i>{% endif %}
+        {% if pipeline.is_lost %}<i class="bi bi-x-circle stage-icon"></i>{% endif %}
         {{ pipeline.name }}
       </span>
-      <span class="kanban-col__count">{{ pipeline.leads.count }}</span>
+      <span class="kanban-col__count">{{ pipeline.leads.all|length }}</span>
     </div>
     <div class="kanban-cards">
       {% for lead in pipeline.leads.all %}
@@ -176,4 +177,4 @@
   </div>
   {% endfor %}
 </div>
-{% endblock %}
+{% endblock content %}
