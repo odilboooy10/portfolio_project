@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Vendors — Purchase — ERP Core{% endblock %}
+{% block page_title %}Purchase — Vendors{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Purchase</span>
+    <h1 class="page-header__title">Vendors</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'purchase:po-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-cart3"></i> Purchase Orders
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:200px;max-width:320px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search name or company…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="active" class="form-select" style="width:auto;">
+      <option value="">Active & inactive</option>
+      <option value="1" {% if current_active == '1' %}selected{% endif %}>Active only</option>
+      <option value="0" {% if current_active == '0' %}selected{% endif %}>Inactive only</option>
+    </select>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_active %}
+    <a href="{% url 'purchase:vendor-list' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="panel" style="border-radius:0;border-left:none;border-right:none;border-top:none;">
+  {% if vendors %}
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th>Vendor</th>
+        <th>Company</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Payment Terms</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for vendor in vendors %}
+      <tr>
+        <td style="font-weight:var(--font-medium);color:var(--color-text-primary);">{{ vendor.name }}</td>
+        <td style="color:var(--color-text-muted);">{{ vendor.company|default:"—" }}</td>
+        <td>
+          <a href="mailto:{{ vendor.email }}"
+             style="color:var(--color-primary);text-decoration:none;font-size:var(--text-xs);">
+            {{ vendor.email }}
+          </a>
+        </td>
+        <td style="color:var(--color-text-muted);">{{ vendor.phone|default:"—" }}</td>
+        <td style="color:var(--color-text-muted);font-size:var(--text-xs);">
+          {{ vendor.payment_terms|default:"—" }}
+        </td>
+        <td>
+          {% if vendor.is_active %}
+          <span class="badge-status badge-done">Active</span>
+          {% else %}
+          <span class="badge-status badge-cancelled">Inactive</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="d-flex gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-building" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No vendors found{% if q %} matching "{{ q }}"{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

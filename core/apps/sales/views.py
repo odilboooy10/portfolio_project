@@ -3,6 +3,8 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.users.permissions import SalesPermission
+from .tasks import send_invoice_pdf_email
 from .models import Customer, Quotation, SaleOrder, Invoice
 from .serializers import (
     CustomerSerializer,
@@ -12,16 +14,9 @@ from .serializers import (
 )
 
 
-class IsManagerOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_manager
-
-
 class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerSerializer
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'company']
     ordering_fields = ['name', 'created_at']
@@ -35,7 +30,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
 
 class QuotationViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'customer__name']
     ordering_fields = ['created_at', 'status']
@@ -120,7 +115,7 @@ class QuotationViewSet(viewsets.ModelViewSet):
 
 
 class SaleOrderViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'customer__name']
     ordering_fields = ['confirmed_at', 'status']
@@ -188,7 +183,7 @@ class SaleOrderViewSet(viewsets.ModelViewSet):
 
 
 class InvoiceViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [SalesPermission]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['reference', 'customer__name']
     ordering_fields = ['created_at', 'due_date', 'status']
@@ -225,6 +220,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         invoice.status = Invoice.Status.ISSUED
         invoice.issue_date = timezone.now().date()
         invoice.save()
+        send_invoice_pdf_email.delay(str(invoice.id))
         return Response(InvoiceDetailSerializer(invoice, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
@@ -260,3 +256,18 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         invoice.status = Invoice.Status.CANCELLED
         invoice.save()
         return Response(InvoiceDetailSerializer(invoice, context={'request': request}).data)
+
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def pdf(self, request, pk=None):
+        """Render invoice as PDF and return as a download."""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        import weasyprint
+
+        invoice = self.get_object()
+        html = render_to_string('pdf/invoice.html', {'invoice': invoice}, request=request)
+        pdf_bytes = weasyprint.HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{invoice.reference}.pdf"'
+        return response

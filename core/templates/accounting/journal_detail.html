@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ entry.reference }} — Accounting — ERP Core{% endblock %}
+{% block page_title %}{{ entry.reference }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'accounting:journal-list' %}">Accounting</a> / Journal Entries
+    </span>
+    <h1 class="page-header__title">{{ entry.reference }}</h1>
+  </div>
+  <div class="page-header__actions">
+    {% if entry.status == 'draft' %}
+      {% if entry.is_balanced %}
+      <form method="post" action="{% url 'accounting:journal-post' entry.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-erp-primary">
+          <i class="bi bi-check2-circle"></i> Post Entry
+        </button>
+      </form>
+      {% else %}
+      <span style="font-size:var(--text-xs);color:var(--color-danger);padding:var(--space-2) var(--space-3);
+                   background:var(--color-danger-light);border-radius:var(--radius-md);">
+        <i class="bi bi-exclamation-triangle-fill"></i> Unbalanced — cannot post
+      </span>
+      {% endif %}
+      <form method="post" action="{% url 'accounting:journal-cancel' entry.pk %}" style="display:inline;"
+            onsubmit="return confirm('Cancel this journal entry?')">
+        {% csrf_token %}
+        <button type="submit" class="btn-erp-danger">
+          <i class="bi bi-x-lg"></i> Cancel
+        </button>
+      </form>
+    {% elif entry.status == 'posted' %}
+    <span class="badge-status badge-done" style="font-size:13px;padding:4px 12px;">
+      <i class="bi bi-check-circle-fill"></i> Posted
+    </span>
+    {% elif entry.status == 'cancelled' %}
+    <span class="badge-status badge-cancelled" style="font-size:13px;padding:4px 12px;">Cancelled</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  {% for step_val, step_label in entry.Status.choices %}
+  {% if step_val != 'cancelled' %}
+    {% if not forloop.first and step_val != 'cancelled' %}
+      <span class="status-bar__arrow">›</span>
+    {% endif %}
+    <span class="status-bar__step
+      {% if entry.status == step_val %}status-bar__step--active
+      {% elif entry.status == 'posted' and step_val == 'draft' %}status-bar__step--done
+      {% endif %}">
+      {{ step_label }}
+    </span>
+  {% endif %}
+  {% endfor %}
+  {% if entry.status == 'cancelled' %}
+  <span class="status-bar__arrow">›</span>
+  <span class="badge-status badge-cancelled" style="font-size:11px;">Cancelled</span>
+  {% endif %}
+</div>
+
+<div style="padding:var(--space-6);display:grid;grid-template-columns:1fr 280px;gap:var(--space-6);align-items:start;">
+
+  <!-- Left: entry lines -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">
+        Ledger Lines
+        {% if entry.is_balanced %}
+        <span style="font-size:var(--text-xs);color:var(--color-success);">
+          <i class="bi bi-check-circle-fill"></i> Balanced
+        </span>
+        {% else %}
+        <span style="font-size:var(--text-xs);color:var(--color-danger);">
+          <i class="bi bi-exclamation-triangle-fill"></i> Not balanced
+        </span>
+        {% endif %}
+      </div>
+      {% if entry.lines.all %}
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Description</th>
+            <th style="text-align:right;">Debit</th>
+            <th style="text-align:right;">Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in entry.lines.all %}
+          <tr>
+            <td>
+              <div style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+                {{ line.account.name }}
+              </div>
+              <div style="font-size:10px;color:var(--color-text-muted);">{{ line.account.code }}</div>
+            </td>
+            <td style="color:var(--color-text-muted);">{{ line.description|default:"—" }}</td>
+            <td style="text-align:right;font-weight:var(--font-medium);
+                color:{% if line.debit > 0 %}var(--color-primary){% else %}var(--color-text-muted){% endif %};">
+              {% if line.debit > 0 %}${{ line.debit }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:right;font-weight:var(--font-medium);
+                color:{% if line.credit > 0 %}var(--color-success){% else %}var(--color-text-muted){% endif %};">
+              {% if line.credit > 0 %}${{ line.credit }}{% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc;border-top:2px solid var(--color-border);">
+            <td colspan="2"
+                style="padding:var(--space-3) var(--space-4);font-weight:var(--font-semi);
+                       font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.04em;
+                       color:var(--color-text-secondary);">
+              Totals
+            </td>
+            <td style="text-align:right;padding:var(--space-3) var(--space-4);
+                       font-weight:var(--font-bold);color:var(--color-primary);">
+              ${{ entry.total_debit }}
+            </td>
+            <td style="text-align:right;padding:var(--space-3) var(--space-4);
+                       font-weight:var(--font-bold);color:var(--color-success);">
+              ${{ entry.total_credit }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+      {% else %}
+      <div style="padding:var(--space-10);text-align:center;color:var(--color-text-muted);">
+        No lines on this entry.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: entry details -->
+  <div class="panel">
+    <div class="panel-header">Details</div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+      <div>
+        <div class="form-label">Status</div>
+        <span class="badge-status badge-{{ entry.status }}">{{ entry.get_status_display }}</span>
+      </div>
+
+      <div>
+        <div class="form-label">Journal</div>
+        <div style="font-size:var(--text-sm);font-weight:var(--font-medium);">
+          {{ entry.journal.name }}
+        </div>
+        <div style="font-size:10px;color:var(--color-text-muted);">{{ entry.journal.get_journal_type_display }}</div>
+      </div>
+
+      <div>
+        <div class="form-label">Date</div>
+        <div style="font-size:var(--text-sm);">{{ entry.date|date:"d M Y" }}</div>
+      </div>
+
+      {% if entry.invoice %}
+      <div>
+        <div class="form-label">Linked Invoice</div>
+        <a href="{% url 'sales:invoice-detail' entry.invoice.pk %}"
+           style="color:var(--color-primary);text-decoration:none;font-size:var(--text-sm);">
+          {{ entry.invoice.reference }}
+        </a>
+        <div style="font-size:10px;color:var(--color-text-muted);">{{ entry.invoice.customer.name }}</div>
+      </div>
+      {% endif %}
+
+      {% if entry.purchase_order %}
+      <div>
+        <div class="form-label">Linked PO</div>
+        <a href="{% url 'purchase:po-detail' entry.purchase_order.pk %}"
+           style="color:var(--color-primary);text-decoration:none;font-size:var(--text-sm);">
+          {{ entry.purchase_order.reference }}
+        </a>
+        <div style="font-size:10px;color:var(--color-text-muted);">{{ entry.purchase_order.vendor.name }}</div>
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="form-label">Created</div>
+        <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+          {{ entry.created_at|date:"d M Y, H:i" }}<br>
+          {{ entry.created_by.get_full_name|default:"—" }}
+        </div>
+      </div>
+
+      {% if entry.note %}
+      <div>
+        <div class="form-label">Note</div>
+        <div style="font-size:var(--text-sm);color:var(--color-text-secondary);">{{ entry.note }}</div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

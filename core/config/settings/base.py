@@ -6,7 +6,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_DIR = BASE_DIR.parent
 
 env = environ.Env()
-environ.Env.read_env(ROOT_DIR / '.env')
+_env_file = ROOT_DIR / '.env'
+if _env_file.exists():
+    environ.Env.read_env(_env_file)
 
 SECRET_KEY = env('SECRET_KEY')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
@@ -41,6 +43,8 @@ LOCAL_APPS = [
     'apps.purchase.apps.PurchaseConfig',
     'apps.accounting.apps.AccountingConfig',
     'apps.dashboard.apps.DashboardConfig',
+    'apps.audit.apps.AuditConfig',
+    'apps.webhooks.apps.WebhooksConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -54,6 +58,7 @@ MIDDLEWARE = [
     'django_htmx.middleware.HtmxMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.audit.middleware.AuditUserMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -123,6 +128,16 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '30/min',    # unauthenticated (login page brute-force protection)
+        'user': '300/min',   # authenticated read traffic
+        'auth': '10/min',    # applied explicitly on auth endpoints
+        'write': '60/min',   # applied explicitly on write endpoints
+    },
 }
 
 SIMPLE_JWT = {
@@ -160,3 +175,9 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@erp.local')
 
 INTERNAL_IPS = ['127.0.0.1']
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
+
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']

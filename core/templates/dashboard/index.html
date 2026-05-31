@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — ERP Core{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ── KPI Cards ───────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card d-flex align-items-center gap-3">
+      <div class="kpi-icon bg-primary-subtle text-primary">
+        <i class="bi bi-currency-dollar"></i>
+      </div>
+      <div>
+        <div class="kpi-label">Revenue this month</div>
+        <div class="kpi-value">${{ summary.revenue.this_month|floatformat:0 }}</div>
+        {% if summary.revenue.mom_change_pct is not None %}
+          <small class="{% if summary.revenue.mom_change_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
+            <i class="bi bi-arrow-{% if summary.revenue.mom_change_pct >= 0 %}up{% else %}down{% endif %}"></i>
+            {{ summary.revenue.mom_change_pct }}% vs last month
+          </small>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card d-flex align-items-center gap-3">
+      <div class="kpi-icon bg-success-subtle text-success">
+        <i class="bi bi-bag-check"></i>
+      </div>
+      <div>
+        <div class="kpi-label">Active orders</div>
+        <div class="kpi-value">{{ summary.orders.confirmed|add:summary.orders.in_progress }}</div>
+        <small class="text-muted">{{ summary.orders.done }} completed</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card d-flex align-items-center gap-3">
+      <div class="kpi-icon {% if summary.invoices.overdue > 0 %}bg-danger-subtle text-danger{% else %}bg-success-subtle text-success{% endif %}">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div>
+        <div class="kpi-label">Overdue invoices</div>
+        <div class="kpi-value">{{ summary.invoices.overdue }}</div>
+        <small class="text-muted">{{ summary.crm.open_leads }} open leads</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card d-flex align-items-center gap-3">
+      <div class="kpi-icon {% if summary.inventory.low_stock_variants > 0 %}bg-warning-subtle text-warning{% else %}bg-success-subtle text-success{% endif %}">
+        <i class="bi bi-boxes"></i>
+      </div>
+      <div>
+        <div class="kpi-label">Low stock variants</div>
+        <div class="kpi-value">{{ summary.inventory.low_stock_variants }}</div>
+        <small class="text-muted">{{ summary.purchases.pending }} pending POs</small>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Revenue Chart + Recent Activity ──────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-xl-7">
+    <div class="card-panel h-100">
+      <div class="panel-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-bar-chart-line me-2 text-primary"></i>Monthly Revenue</span>
+        <span class="text-muted" style="font-size:.78rem;">Last 12 months</span>
+      </div>
+      <div class="panel-body">
+        <canvas id="revenueChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card-panel h-100">
+      <div class="panel-header">
+        <i class="bi bi-activity me-2 text-primary"></i>Recent Activity
+      </div>
+      <div class="panel-body p-0">
+        <ul class="list-group list-group-flush" style="max-height:300px;overflow-y:auto;">
+          {% for event in recent_activity %}
+            <li class="list-group-item border-0 px-3 py-2">
+              <div class="d-flex align-items-start gap-2">
+                <span class="mt-1" style="font-size:.9rem;">
+                  {% if event.type == 'sale_order' %}<i class="bi bi-bag text-success"></i>
+                  {% elif event.type == 'invoice' %}<i class="bi bi-receipt text-primary"></i>
+                  {% elif event.type == 'purchase_order' %}<i class="bi bi-cart text-warning"></i>
+                  {% else %}<i class="bi bi-calendar-check text-info"></i>
+                  {% endif %}
+                </span>
+                <div>
+                  <div style="font-size:.83rem;">{{ event.description }}</div>
+                  <div class="text-muted" style="font-size:.73rem;">
+                    {{ event.timestamp|date:"M d, Y H:i" }}
+                  </div>
+                </div>
+              </div>
+            </li>
+          {% empty %}
+            <li class="list-group-item border-0 text-muted text-center py-4 small">No recent activity</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Low Stock + Order Pipeline ───────────────────────────── -->
+<div class="row g-3">
+
+  <div class="col-xl-6">
+    <div class="card-panel">
+      <div class="panel-header">
+        <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Low Stock Alert
+      </div>
+      <div class="panel-body p-0">
+        {% if low_stock %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="px-3">Product</th>
+                  <th>SKU</th>
+                  <th>Warehouse</th>
+                  <th class="text-end pe-3">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in low_stock %}
+                  <tr>
+                    <td class="px-3">{{ item.product_name }}</td>
+                    <td class="text-muted small">{{ item.variant_sku }}</td>
+                    <td class="text-muted small">{{ item.warehouse }}</td>
+                    <td class="text-end pe-3">
+                      <span class="badge {% if item.quantity <= 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                        {{ item.quantity }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted text-center py-4 small mb-0">All stock levels are healthy.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card-panel">
+      <div class="panel-header">
+        <i class="bi bi-funnel me-2 text-primary"></i>Order Pipeline
+      </div>
+      <div class="panel-body">
+        {% for row in order_pipeline %}
+          <div class="d-flex align-items-center mb-3">
+            <span class="text-capitalize me-auto" style="font-size:.87rem;">{{ row.status|cut:"_" }}</span>
+            <span class="badge bg-primary-subtle text-primary me-2">{{ row.count }}</span>
+            <span class="text-muted small">${{ row.total_revenue|default:0|floatformat:0 }}</span>
+          </div>
+        {% empty %}
+          <p class="text-muted text-center py-2 small">No orders yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const labels = {{ chart_labels|safe }};
+    const data   = {{ chart_data|safe }};
+
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Revenue ($)',
+          data,
+          backgroundColor: 'rgba(59, 91, 219, 0.15)',
+          borderColor: 'rgba(59, 91, 219, 0.9)',
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => '$' + Number(ctx.raw).toLocaleString()
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: v => '$' + Number(v).toLocaleString()
+            },
+            grid: { color: '#f0f2f5' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

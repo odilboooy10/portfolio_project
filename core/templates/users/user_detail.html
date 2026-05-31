@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.get_full_name|default:profile.email }} — Users — ERP Core{% endblock %}
+{% block page_title %}User Detail{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'users:user-list' %}" style="color:var(--color-text-muted);text-decoration:none;">Users</a>
+      &rsaquo; {{ profile.get_full_name|default:profile.email }}
+    </span>
+    <h1 class="page-header__title">{{ profile.get_full_name|default:profile.email }}</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'users:user-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:340px 1fr;gap:var(--space-6);padding:var(--space-6);">
+
+  <!-- Left: Profile card -->
+  <div>
+    <div class="panel">
+      <div class="panel-body" style="text-align:center;padding:var(--space-8) var(--space-6);">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--color-primary-light);
+                    display:flex;align-items:center;justify-content:center;
+                    color:var(--color-primary);font-weight:var(--font-bold);font-size:1.75rem;
+                    margin:0 auto var(--space-4);">
+          {{ profile.first_name|first|upper|default:profile.email|first|upper }}
+        </div>
+        <div style="font-size:var(--text-lg);font-weight:var(--font-bold);color:var(--color-text-primary);">
+          {{ profile.get_full_name|default:"—" }}
+        </div>
+        <div style="color:var(--color-text-muted);font-size:var(--text-sm);margin-top:var(--space-1);">
+          {{ profile.email }}
+        </div>
+        <div style="margin-top:var(--space-4);">
+          {% if profile.is_active %}
+          <span class="badge-status badge-done">Active</span>
+          {% else %}
+          <span class="badge-status badge-cancelled">Inactive</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--color-border);padding:var(--space-5) var(--space-6);">
+        <dl style="margin:0;display:flex;flex-direction:column;gap:var(--space-4);">
+          <div>
+            <dt style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                       letter-spacing:0.05em;font-weight:var(--font-semi);margin-bottom:2px;">Role</dt>
+            <dd style="margin:0;font-weight:var(--font-medium);">{{ profile.get_role_display }}</dd>
+          </div>
+          <div>
+            <dt style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                       letter-spacing:0.05em;font-weight:var(--font-semi);margin-bottom:2px;">Last Login</dt>
+            <dd style="margin:0;color:var(--color-text-secondary);">
+              {{ profile.last_login|date:"d M Y H:i"|default:"Never" }}
+            </dd>
+          </div>
+          <div>
+            <dt style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                       letter-spacing:0.05em;font-weight:var(--font-semi);margin-bottom:2px;">Member Since</dt>
+            <dd style="margin:0;color:var(--color-text-secondary);">
+              {{ profile.date_joined|date:"d M Y" }}
+            </dd>
+          </div>
+          <div>
+            <dt style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                       letter-spacing:0.05em;font-weight:var(--font-semi);margin-bottom:2px;">User ID</dt>
+            <dd style="margin:0;font-size:var(--text-sm);color:var(--color-text-muted);
+                       font-family:monospace;">#{{ profile.pk }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Actions -->
+  <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+
+    <!-- Change Role -->
+    {% if profile != request.user %}
+    <div class="panel">
+      <div class="panel-header">
+        <span style="font-weight:var(--font-semi);color:var(--color-text-primary);">
+          <i class="bi bi-shield-check" style="margin-right:var(--space-2);color:var(--color-primary);"></i>
+          Change Role
+        </span>
+      </div>
+      <div class="panel-body">
+        <form method="post" action="{% url 'users:user-change-role' profile.pk %}"
+              style="display:flex;align-items:center;gap:var(--space-3);">
+          {% csrf_token %}
+          <select name="role" class="form-select" style="width:auto;min-width:180px;">
+            {% for val, label in roles %}
+            <option value="{{ val }}" {% if profile.role == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn-erp-primary">Save Role</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toggle Active -->
+    <div class="panel">
+      <div class="panel-header">
+        <span style="font-weight:var(--font-semi);color:var(--color-text-primary);">
+          <i class="bi bi-toggle-on" style="margin-right:var(--space-2);color:var(--color-primary);"></i>
+          Account Status
+        </span>
+      </div>
+      <div class="panel-body" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-weight:var(--font-medium);margin-bottom:var(--space-1);">
+            {% if profile.is_active %}User is active and can log in.{% else %}User is inactive and cannot log in.{% endif %}
+          </div>
+          <div style="font-size:var(--text-sm);color:var(--color-text-muted);">
+            Toggling will immediately {% if profile.is_active %}block{% else %}restore{% endif %} access.
+          </div>
+        </div>
+        <form method="post" action="{% url 'users:user-toggle-active' profile.pk %}">
+          {% csrf_token %}
+          {% if profile.is_active %}
+          <button type="submit" class="btn-erp-danger">
+            <i class="bi bi-person-slash"></i> Deactivate
+          </button>
+          {% else %}
+          <button type="submit" class="btn-erp-primary">
+            <i class="bi bi-person-check"></i> Activate
+          </button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="panel">
+      <div class="panel-body" style="color:var(--color-text-muted);font-size:var(--text-sm);">
+        <i class="bi bi-info-circle" style="margin-right:var(--space-2);"></i>
+        This is your own account. Role changes and deactivation are disabled.
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,415 @@
+/*
+ * ERP Design Tokens — single source of truth
+ * Change values here; everything in the app inherits them.
+ * Import this file BEFORE bootstrap in base.html.
+ *
+ * Palette: Slate sidebar + Indigo primary (modern SaaS internal tool)
+ * Reference: Tabler UI patterns, Linear.app spacing
+ */
+
+/* ─── Color Palette ────────────────────────────────────────────────── */
+:root {
+  /* Brand */
+  --color-primary:         #4f46e5;   /* indigo-600  — buttons, links, active states */
+  --color-primary-hover:   #4338ca;   /* indigo-700  — hover */
+  --color-primary-light:   #e0e7ff;   /* indigo-100  — badge backgrounds, highlights */
+  --color-primary-muted:   #6366f1;   /* indigo-500  — secondary brand use */
+
+  /* Sidebar */
+  --color-sidebar-bg:      #1e293b;   /* slate-800   — sidebar background */
+  --color-sidebar-text:    #94a3b8;   /* slate-400   — inactive nav links */
+  --color-sidebar-active:  #f1f5f9;   /* slate-100   — active nav link text */
+  --color-sidebar-hover:   #334155;   /* slate-700   — nav link hover bg */
+  --color-sidebar-border:  #334155;   /* slate-700   — sidebar dividers */
+
+  /* Page */
+  --color-page-bg:         #f1f5f9;   /* slate-100   — page background */
+  --color-card-bg:         #ffffff;   /* white        — cards, panels */
+  --color-border:          #e2e8f0;   /* slate-200   — card borders, table dividers */
+  --color-border-strong:   #cbd5e1;   /* slate-300   — focused input borders */
+
+  /* Text */
+  --color-text-primary:    #0f172a;   /* slate-900   — headings, labels */
+  --color-text-secondary:  #475569;   /* slate-600   — body text, descriptions */
+  --color-text-muted:      #94a3b8;   /* slate-400   — placeholders, timestamps */
+  --color-text-inverse:    #f8fafc;   /* slate-50    — text on dark bg */
+
+  /* Status — semantic colors */
+  --color-success:         #16a34a;   /* green-600 */
+  --color-success-light:   #dcfce7;   /* green-100 */
+  --color-warning:         #d97706;   /* amber-600 */
+  --color-warning-light:   #fef3c7;   /* amber-100 */
+  --color-danger:          #dc2626;   /* red-600 */
+  --color-danger-light:    #fee2e2;   /* red-100 */
+  --color-info:            #0284c7;   /* sky-600 */
+  --color-info-light:      #e0f2fe;   /* sky-100 */
+
+  /* Pipeline / workflow status colors */
+  --status-draft:          #94a3b8;   /* slate-400 */
+  --status-confirmed:      #4f46e5;   /* indigo */
+  --status-in-progress:    #d97706;   /* amber */
+  --status-done:           #16a34a;   /* green */
+  --status-cancelled:      #dc2626;   /* red */
+  --status-paid:           #16a34a;
+  --status-unpaid:         #d97706;
+  --status-overdue:        #dc2626;
+}
+
+/* ─── Typography ───────────────────────────────────────────────────── */
+:root {
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  --text-xs:      0.75rem;    /* 12px — timestamps, labels */
+  --text-sm:      0.875rem;   /* 14px — table rows, secondary content */
+  --text-base:    1rem;       /* 16px — body */
+  --text-lg:      1.125rem;   /* 18px — section titles */
+  --text-xl:      1.25rem;    /* 20px — card headings */
+  --text-2xl:     1.5rem;     /* 24px — page titles */
+  --text-3xl:     1.875rem;   /* 30px — KPI numbers */
+
+  --font-normal:  400;
+  --font-medium:  500;
+  --font-semi:    600;
+  --font-bold:    700;
+
+  --leading-tight:  1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.625;
+}
+
+/* ─── Spacing Scale (8px base grid) ───────────────────────────────── */
+:root {
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+}
+
+/* ─── Layout ───────────────────────────────────────────────────────── */
+:root {
+  --sidebar-width:        240px;
+  --sidebar-collapsed:     64px;
+  --topbar-height:         56px;
+  --content-max-width:   1280px;
+  --card-padding:          var(--space-6);
+  --table-cell-padding-y:  var(--space-3);
+  --table-cell-padding-x:  var(--space-4);
+}
+
+/* ─── Borders & Radius ─────────────────────────────────────────────── */
+:root {
+  --radius-sm:   4px;    /* inputs, small badges */
+  --radius-md:   6px;    /* cards, dropdowns */
+  --radius-lg:   8px;    /* modals, larger cards */
+  --radius-full: 9999px; /* pill badges */
+
+  --border-width:       1px;
+  --border-color:       var(--color-border);
+}
+
+/* ─── Shadows ──────────────────────────────────────────────────────── */
+:root {
+  --shadow-xs:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:  0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* ─── Transitions ──────────────────────────────────────────────────── */
+:root {
+  --transition-fast:   150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow:   300ms ease;
+}
+
+/* ─── Bootstrap Overrides ──────────────────────────────────────────── */
+:root {
+  /* Remap Bootstrap's CSS variables to our tokens */
+  --bs-primary:          var(--color-primary);
+  --bs-primary-rgb:      79, 70, 229;
+  --bs-body-bg:          var(--color-page-bg);
+  --bs-body-color:       var(--color-text-secondary);
+  --bs-body-font-family: var(--font-sans);
+  --bs-body-font-size:   var(--text-sm);
+  --bs-border-color:     var(--color-border);
+  --bs-border-radius:    var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
+  --bs-card-bg:          var(--color-card-bg);
+  --bs-card-border-color:var(--color-border);
+  --bs-card-cap-bg:      var(--color-card-bg);
+  --bs-success:          var(--color-success);
+  --bs-warning:          var(--color-warning);
+  --bs-danger:           var(--color-danger);
+  --bs-info:             var(--color-info);
+}
+
+/* ─── Component Patterns ───────────────────────────────────────────── */
+
+/* Page title bar — sits below topbar, above content */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-card-bg);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+.page-header__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semi);
+  color: var(--color-text-primary);
+}
+.page-header__breadcrumb {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* Status bar — horizontal pipeline strip on record detail pages */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-6);
+  background: var(--color-card-bg);
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.status-bar__step {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+}
+.status-bar__step--active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+.status-bar__step--done {
+  color: var(--color-success);
+}
+
+/* Data table */
+.erp-table {
+  font-size: var(--text-sm);
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+.erp-table th {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semi);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+}
+.erp-table td {
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+  border-bottom: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
+  vertical-align: middle;
+}
+.erp-table tr:last-child td { border-bottom: none; }
+.erp-table tbody tr:hover td { background: var(--color-page-bg); }
+
+/* Status badge pills */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+}
+.badge-status::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge-draft      { color: var(--status-draft);       background: #f1f5f9; }
+.badge-confirmed  { color: var(--status-confirmed);    background: var(--color-primary-light); }
+.badge-in-progress{ color: var(--status-in-progress);  background: var(--color-warning-light); }
+.badge-done       { color: var(--status-done);         background: var(--color-success-light); }
+.badge-cancelled  { color: var(--status-cancelled);    background: var(--color-danger-light); }
+.badge-paid       { color: var(--status-paid);         background: var(--color-success-light); }
+.badge-unpaid     { color: var(--status-unpaid);       background: var(--color-warning-light); }
+.badge-overdue    { color: var(--status-overdue);      background: var(--color-danger-light); }
+
+/* KPI stat card */
+.stat-card {
+  background: var(--color-card-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-xs);
+}
+.stat-card__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semi);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stat-card__value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+}
+.stat-card__delta {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.stat-card__delta--up   { color: var(--color-success); }
+.stat-card__delta--down { color: var(--color-danger); }
+
+/* Action buttons — primary pattern for all CRUD pages */
+.btn-primary-erp {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+.btn-primary-erp:hover { background: var(--color-primary-hover); color: var(--color-text-inverse); }
+
+.btn-ghost-erp {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.btn-ghost-erp:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+
+/* Filter bar — sits above every list view table */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-card-bg);
+  border-bottom: var(--border-width) solid var(--color-border);
+  flex-wrap: wrap;
+}
+.filter-bar__search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 360px;
+}
+
+/* Sidebar */
+.erp-sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-sidebar-bg);
+  color: var(--color-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  overflow-y: auto;
+}
+.erp-sidebar__logo {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text-inverse);
+  border-bottom: 1px solid var(--color-sidebar-border);
+}
+.erp-sidebar__nav-label {
+  padding: var(--space-4) var(--space-4) var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semi);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-sidebar-text);
+  opacity: 0.6;
+}
+.erp-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-sidebar-text);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+  margin: 1px var(--space-2);
+  transition: all var(--transition-fast);
+}
+.erp-sidebar__link:hover {
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-active);
+}
+.erp-sidebar__link.active {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+/* ─── Mobile sidebar backdrop ──────────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  z-index: 99;
+  cursor: pointer;
+}
+.sidebar-backdrop.show { display: block; }
+
+/* ─── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Tables scroll horizontally instead of overflowing */
+  .panel { overflow-x: auto; }
+
+  /* Page header wraps so action buttons don't get clipped */
+  .page-header {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  /* Status pipeline bars wrap on narrow screens */
+  .status-bar { flex-wrap: wrap; gap: var(--space-2); }
+
+  /* All inline CSS grid layouts collapse to single column */
+  #page-content [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Slightly tighter table cells on mobile */
+  .erp-table th,
+  .erp-table td {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  /* Flash messages narrower padding */
+  .flash-messages { padding: var(--space-2) var(--space-3) 0; }
+}

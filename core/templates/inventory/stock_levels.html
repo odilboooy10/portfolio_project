@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Stock Levels — Inventory — ERP Core{% endblock %}
+{% block page_title %}Inventory — Stock Levels{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Inventory</span>
+    <h1 class="page-header__title">Stock Levels</h1>
+  </div>
+  <div class="page-header__actions">
+    {% if low_count > 0 %}
+    <a href="?low=1" class="btn-erp-ghost" style="color:var(--color-danger);border-color:#fecaca;">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ low_count }} Low Stock
+    </a>
+    {% endif %}
+    <a href="{% url 'inventory:product-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-grid"></i> Products
+    </a>
+    <a href="{% url 'inventory:stock-move-create' %}" class="btn-erp-primary">
+      <i class="bi bi-plus-lg"></i> Stock Move
+    </a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:200px;max-width:320px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search product or SKU…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="warehouse" class="form-select" style="width:auto;">
+      <option value="">All warehouses</option>
+      {% for wh in warehouses %}
+      <option value="{{ wh.pk }}" {% if current_warehouse == wh.pk|stringformat:"s" %}selected{% endif %}>
+        {{ wh.name }} ({{ wh.code }})
+      </option>
+      {% endfor %}
+    </select>
+    <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);
+                  color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;">
+      <input type="checkbox" name="low" value="1" {% if current_low == '1' %}checked{% endif %}
+             onchange="this.form.submit()" style="accent-color:var(--color-danger);">
+      Low stock only (≤ {{ low_threshold }})
+    </label>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_warehouse or current_low %}
+    <a href="{% url 'inventory:stock-levels' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="panel" style="border-radius:0;border-left:none;border-right:none;border-top:none;">
+  {% if stock_levels %}
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Variant SKU</th>
+        <th>Warehouse</th>
+        <th style="text-align:right;">Quantity</th>
+        <th>Level</th>
+        <th>Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sl in stock_levels %}
+      {% with is_low=sl.quantity|floatformat:0 %}
+      <tr {% if sl.quantity <= low_threshold %}style="background:#fff5f5;"{% endif %}>
+        <td>
+          <a href="{% url 'inventory:product-detail' sl.variant.product.pk %}"
+             style="color:var(--color-primary);font-weight:var(--font-medium);text-decoration:none;">
+            {{ sl.variant.product.name }}
+          </a>
+        </td>
+        <td>
+          <code style="font-size:var(--text-xs);background:#f1f5f9;padding:2px 6px;
+                       border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+            {{ sl.variant.sku }}
+          </code>
+        </td>
+        <td style="color:var(--color-text-muted);">{{ sl.warehouse.name }}</td>
+        <td style="text-align:right;">
+          <span style="font-size:var(--text-base);font-weight:var(--font-bold);
+              color:{% if sl.quantity <= low_threshold %}var(--color-danger){% elif sl.quantity <= low_threshold|add:10 %}var(--color-warning){% else %}var(--color-text-primary){% endif %};">
+            {{ sl.quantity|floatformat:0 }}
+          </span>
+        </td>
+        <td style="min-width:100px;">
+          {% if sl.quantity <= 0 %}
+          <span class="badge-status badge-cancelled">Out of Stock</span>
+          {% elif sl.quantity <= low_threshold %}
+          <span class="badge-status badge-in-progress">Low</span>
+          {% else %}
+          <span class="badge-status badge-done">OK</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--color-text-muted);font-size:var(--text-xs);">
+          {{ sl.updated_at|date:"d M Y, H:i" }}
+        </td>
+      </tr>
+      {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="d-flex gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_low %}&low={{ current_low }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_low %}&low={{ current_low }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-box" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No stock records found{% if q or current_warehouse or current_low %} matching your filters{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

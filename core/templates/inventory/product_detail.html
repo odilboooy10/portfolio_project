@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — Inventory — ERP Core{% endblock %}
+{% block page_title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">
+      <a href="{% url 'inventory:product-list' %}">Inventory</a> / Products
+    </span>
+    <h1 class="page-header__title">{{ product.name }}</h1>
+  </div>
+  <div class="page-header__actions">
+    {% if product.is_active %}
+    <span class="badge-status badge-done">Active</span>
+    {% else %}
+    <span class="badge-status badge-cancelled">Inactive</span>
+    {% endif %}
+    <a href="{% url 'inventory:stock-move-create' %}" class="btn-erp-primary">
+      <i class="bi bi-plus-lg"></i> Stock Move
+    </a>
+  </div>
+</div>
+
+<div style="padding:var(--space-6);display:grid;grid-template-columns:1fr 300px;gap:var(--space-6);align-items:start;">
+
+  <!-- Left: variants + stock -->
+  <div style="display:flex;flex-direction:column;gap:var(--space-5);">
+
+    <!-- Variants -->
+    <div class="panel">
+      <div class="panel-header">
+        Variants
+        <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+          {{ product.variants.count }} total
+        </span>
+      </div>
+      {% if product.variants.all %}
+      <table class="erp-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Attributes</th>
+            <th style="text-align:right;">Price</th>
+            <th>Status</th>
+            {% for wh in warehouses %}<th style="text-align:right;">{{ wh.code }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for variant in product.variants.all %}
+          <tr>
+            <td>
+              <code style="font-size:var(--text-xs);background:#f1f5f9;padding:2px 6px;
+                           border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+                {{ variant.sku }}
+              </code>
+            </td>
+            <td style="font-size:var(--text-xs);color:var(--color-text-muted);">
+              {% for av in variant.attribute_values.all %}
+              <span style="background:#f1f5f9;padding:1px 6px;border-radius:var(--radius-full);
+                           margin-right:3px;">{{ av }}</span>
+              {% empty %}—{% endfor %}
+            </td>
+            <td style="text-align:right;font-weight:var(--font-medium);">
+              ${{ variant.effective_price }}
+              {% if variant.price_override %}
+              <div style="font-size:10px;color:var(--color-text-muted);">override</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if variant.is_active %}
+              <span class="badge-status badge-done">Active</span>
+              {% else %}
+              <span class="badge-status badge-cancelled">Inactive</span>
+              {% endif %}
+            </td>
+            {% for wh in warehouses %}
+            {% with sl=variant.stock_levels.all %}
+            {% for s in sl %}{% if s.warehouse_id == wh.pk %}
+              <td style="text-align:right;font-weight:var(--font-medium);
+                  color:{% if s.quantity <= low_threshold %}var(--color-danger){% else %}var(--color-text-primary){% endif %};">
+                {{ s.quantity|floatformat:0 }}
+                {% if s.quantity <= low_threshold %}
+                <i class="bi bi-exclamation-triangle-fill" style="font-size:10px;"></i>
+                {% endif %}
+              </td>
+            {% endif %}{% endfor %}
+            {% endwith %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="padding:var(--space-8);text-align:center;color:var(--color-text-muted);">
+        No variants defined.
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Right: product info -->
+  <div class="panel">
+    <div class="panel-header">Product Info</div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+      {% if product.image %}
+      <div>
+        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+             style="width:100%;height:160px;object-fit:contain;border-radius:var(--radius-md);
+                    background:#f8fafc;border:1px solid var(--color-border);">
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="form-label">SKU</div>
+        <code style="font-size:var(--text-sm);background:#f1f5f9;padding:2px 8px;
+                     border-radius:var(--radius-sm);color:var(--color-text-secondary);">
+          {{ product.sku }}
+        </code>
+      </div>
+
+      <div>
+        <div class="form-label">Category</div>
+        <div style="font-size:var(--text-sm);">{{ product.category|default:"—" }}</div>
+      </div>
+
+      <div>
+        <div class="form-label">Base Price</div>
+        <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-text-primary);">
+          ${{ product.base_price }}
+        </div>
+      </div>
+
+      {% if product.attributes.all %}
+      <div>
+        <div class="form-label">Attributes</div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-1);">
+          {% for attr in product.attributes.all %}
+          <span style="font-size:var(--text-xs);background:var(--color-primary-light);
+                       color:var(--color-primary);padding:2px 8px;border-radius:var(--radius-full);">
+            {{ attr.name }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if product.description %}
+      <div>
+        <div class="form-label">Description</div>
+        <div style="font-size:var(--text-sm);color:var(--color-text-secondary);line-height:var(--leading-relaxed);">
+          {{ product.description }}
+        </div>
+      </div>
+      {% endif %}
+
+      <div>
+        <div class="form-label">Created</div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-muted);">
+          {{ product.created_at|date:"d M Y" }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

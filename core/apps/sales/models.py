@@ -2,9 +2,10 @@ import uuid
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from apps.audit.mixins import AuditableMixin
 
 
-class Customer(models.Model):
+class Customer(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -23,7 +24,7 @@ class Customer(models.Model):
         return self.name
 
 
-class Quotation(models.Model):
+class Quotation(AuditableMixin, models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         SENT = 'sent', 'Sent to Customer'
@@ -68,7 +69,7 @@ class Quotation(models.Model):
         return self.subtotal * (1 - self.discount / 100)
 
 
-class QuotationLine(models.Model):
+class QuotationLine(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name='lines')
     variant = models.ForeignKey(
@@ -92,7 +93,7 @@ class QuotationLine(models.Model):
         return self.quantity * self.unit_price
 
 
-class SaleOrder(models.Model):
+class SaleOrder(AuditableMixin, models.Model):
     class Status(models.TextChoices):
         CONFIRMED = 'confirmed', 'Confirmed'
         IN_PROGRESS = 'in_progress', 'In Progress'
@@ -139,7 +140,7 @@ class SaleOrder(models.Model):
         return self.subtotal * (1 - self.discount / 100)
 
 
-class SaleOrderLine(models.Model):
+class SaleOrderLine(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.ForeignKey(SaleOrder, on_delete=models.CASCADE, related_name='lines')
     variant = models.ForeignKey(
@@ -163,7 +164,7 @@ class SaleOrderLine(models.Model):
         return self.quantity * self.unit_price
 
 
-class Invoice(models.Model):
+class Invoice(AuditableMixin, models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         ISSUED = 'issued', 'Issued'
@@ -213,7 +214,7 @@ class Invoice(models.Model):
         return self.subtotal * (1 - self.discount / 100)
 
 
-class InvoiceLine(models.Model):
+class InvoiceLine(AuditableMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='lines')
     variant = models.ForeignKey(

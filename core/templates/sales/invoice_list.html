@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Invoices — ERP Core{% endblock %}
+{% block page_title %}Invoices{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Sales</span>
+    <h1 class="page-header__title">Invoices</h1>
+  </div>
+  <div class="page-header__actions">
+    <a href="{% url 'sales:order-list' %}" class="btn-erp-ghost">
+      <i class="bi bi-bag-check"></i> Orders
+    </a>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:200px;max-width:320px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search reference or customer…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="status" class="form-select" style="width:auto;">
+      <option value="">All statuses</option>
+      {% for val, label in statuses %}
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_status %}
+    <a href="{% url 'sales:invoice-list' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Table -->
+<div class="panel" style="border-radius:0;border-left:none;border-right:none;border-top:none;">
+  {% if invoices %}
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Customer</th>
+        <th>Status</th>
+        <th>Issue Date</th>
+        <th>Due Date</th>
+        <th>Paid At</th>
+        <th>Sale Order</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr onclick="window.location='{% url 'sales:invoice-detail' inv.pk %}'">
+        <td>
+          <a href="{% url 'sales:invoice-detail' inv.pk %}"
+             style="color:var(--color-primary);font-weight:var(--font-medium);text-decoration:none;">
+            {{ inv.reference }}
+          </a>
+        </td>
+        <td>{{ inv.customer.name }}</td>
+        <td>
+          <span class="badge-status badge-{{ inv.status }}">
+            {{ inv.get_status_display }}
+          </span>
+        </td>
+        <td style="color:var(--color-text-muted);">{{ inv.issue_date|date:"d M Y"|default:"—" }}</td>
+        <td style="color:var(--color-text-muted);">{{ inv.due_date|date:"d M Y"|default:"—" }}</td>
+        <td style="color:var(--color-text-muted);">{{ inv.paid_at|date:"d M Y"|default:"—" }}</td>
+        <td style="color:var(--color-text-muted);">
+          {% if inv.sale_order %}
+          <a href="{% url 'sales:order-detail' inv.sale_order.pk %}"
+             style="color:var(--color-primary);text-decoration:none;">
+            {{ inv.sale_order.reference }}
+          </a>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="d-flex gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-receipt" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No invoices found{% if q or current_status %} matching your filters{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

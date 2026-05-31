@@ -26,3 +26,4 @@ weasyprint==60.2
 # Utils
 django-extensions==3.2.3
 Faker==23.1.0
+django-ratelimit==4.1.0

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Users — ERP Core{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header__left">
+    <span class="page-header__breadcrumb">Admin</span>
+    <h1 class="page-header__title">Users</h1>
+  </div>
+</div>
+
+<!-- KPI strip -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);
+            padding:var(--space-4) var(--space-6);background:var(--color-card-bg);
+            border-bottom:1px solid var(--color-border);">
+  <div style="display:flex;align-items:center;gap:var(--space-4);">
+    <div style="width:36px;height:36px;background:var(--color-primary-light);border-radius:var(--radius-md);
+                display:flex;align-items:center;justify-content:center;color:var(--color-primary);">
+      <i class="bi bi-people-fill"></i>
+    </div>
+    <div>
+      <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                  letter-spacing:0.05em;font-weight:var(--font-semi);">Total Users</div>
+      <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-text-primary);">
+        {{ total_count }}
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:var(--space-4);">
+    <div style="width:36px;height:36px;background:#dcfce7;border-radius:var(--radius-md);
+                display:flex;align-items:center;justify-content:center;color:var(--color-success);">
+      <i class="bi bi-person-check-fill"></i>
+    </div>
+    <div>
+      <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                  letter-spacing:0.05em;font-weight:var(--font-semi);">Active</div>
+      <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-success);">
+        {{ active_count }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex align-items-center gap-3 flex-wrap" style="flex:1;">
+    <div style="flex:1;min-width:180px;max-width:260px;position:relative;">
+      <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+         color:var(--color-text-muted);font-size:13px;pointer-events:none;"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search by name or email…"
+             class="form-control" style="padding-left:32px;">
+    </div>
+    <select name="role" class="form-select" style="width:auto;">
+      <option value="">All roles</option>
+      {% for val, label in roles %}
+      <option value="{{ val }}" {% if current_role == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="active" class="form-select" style="width:auto;">
+      <option value="">Any status</option>
+      <option value="1" {% if current_active == '1' %}selected{% endif %}>Active</option>
+      <option value="0" {% if current_active == '0' %}selected{% endif %}>Inactive</option>
+    </select>
+    <button type="submit" class="btn-erp-primary">Filter</button>
+    {% if q or current_role or current_active %}
+    <a href="{% url 'users:user-list' %}" class="btn-erp-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="panel" style="border-radius:0;border-left:none;border-right:none;border-top:none;">
+  {% if users %}
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Last Login</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr style="cursor:pointer;" onclick="window.location='{% url 'users:user-detail' user.pk %}'">
+        <td>
+          <div style="display:flex;align-items:center;gap:var(--space-3);">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--color-primary-light);
+                        display:flex;align-items:center;justify-content:center;
+                        color:var(--color-primary);font-weight:var(--font-bold);font-size:var(--text-xs);
+                        flex-shrink:0;">
+              {{ user.first_name|first|upper|default:user.email|first|upper }}
+            </div>
+            <span style="font-weight:var(--font-medium);color:var(--color-text-primary);">
+              {{ user.get_full_name|default:"—" }}
+            </span>
+          </div>
+        </td>
+        <td style="color:var(--color-text-secondary);">{{ user.email }}</td>
+        <td>
+          <span style="font-size:var(--text-xs);background:#f1f5f9;padding:2px 8px;
+                       border-radius:var(--radius-full);color:var(--color-text-secondary);">
+            {{ user.get_role_display }}
+          </span>
+        </td>
+        <td>
+          {% if user.is_active %}
+          <span class="badge-status badge-done">Active</span>
+          {% else %}
+          <span class="badge-status badge-cancelled">Inactive</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--color-text-muted);font-size:var(--text-sm);">
+          {{ user.last_login|date:"d M Y H:i"|default:"Never" }}
+        </td>
+        <td style="color:var(--color-text-muted);font-size:var(--text-sm);">
+          {{ user.date_joined|date:"d M Y" }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div style="padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:var(--text-xs);color:var(--color-text-muted);">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    <div class="d-flex gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_role %}&role={{ current_role }}{% endif %}{% if current_active %}&active={{ current_active }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        <i class="bi bi-chevron-left"></i> Prev
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_role %}&role={{ current_role }}{% endif %}{% if current_active %}&active={{ current_active }}{% endif %}"
+         class="btn-erp-ghost" style="padding:var(--space-1) var(--space-3);">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:var(--space-16);text-align:center;color:var(--color-text-muted);">
+    <i class="bi bi-people" style="font-size:2.5rem;display:block;margin-bottom:var(--space-3);"></i>
+    No users found{% if q or current_role or current_active %} matching your filters{% endif %}.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
