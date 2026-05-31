@@ -415,6 +415,9 @@
 <body>
 
 {% if user.is_authenticated %}
+<!-- ── Mobile sidebar backdrop ──────────────────────────────────── -->
+<div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <!-- ── Sidebar ──────────────────────────────────────────────────── -->
 <nav id="sidebar">
   <div class="sidebar-brand">
@@ -496,7 +499,7 @@
 <div id="main-wrapper">
   <header id="topbar">
     <button class="btn btn-sm d-md-none me-1 p-1"
-            onclick="document.getElementById('sidebar').classList.toggle('show')"
+            onclick="toggleSidebar()"
             style="border:none;background:transparent;color:var(--color-text-secondary);">
       <i class="bi bi-list fs-5"></i>
     </button>
@@ -529,6 +532,20 @@
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleSidebar() {
+  var s = document.getElementById('sidebar');
+  var b = document.getElementById('sidebar-backdrop');
+  s.classList.toggle('show');
+  if (b) b.classList.toggle('show');
+}
+function closeSidebar() {
+  var s = document.getElementById('sidebar');
+  var b = document.getElementById('sidebar-backdrop');
+  if (s) s.classList.remove('show');
+  if (b) b.classList.remove('show');
+}
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
