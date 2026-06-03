@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 
+from apps.users.frontend_views import AdminRequiredMixin
+
 from apps.inventory.models import (
     Category, Product, StockLevel, StockMove, Warehouse, ProductVariant
 )
@@ -181,7 +183,7 @@ def _product_values(post=None, product=None):
     return {'name': '', 'sku': '', 'base_price': '', 'category': '', 'description': '', 'is_active': True, 'initial_qty': '0'}
 
 
-class ProductCreateView(LoginRequiredMixin, View):
+class ProductCreateView(AdminRequiredMixin, View):
     template_name = 'inventory/product_form.html'
 
     def get(self, request):
@@ -277,7 +279,7 @@ class ProductCreateView(LoginRequiredMixin, View):
         return redirect('inventory:product-detail', pk=product.pk)
 
 
-class ProductUpdateView(LoginRequiredMixin, View):
+class ProductUpdateView(AdminRequiredMixin, View):
     template_name = 'inventory/product_form.html'
 
     def get(self, request, pk):
@@ -340,7 +342,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
         return redirect('inventory:product-detail', pk=product.pk)
 
 
-class ProductDeleteView(LoginRequiredMixin, View):
+class ProductDeleteView(AdminRequiredMixin, View):
     def post(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
         name = product.name
