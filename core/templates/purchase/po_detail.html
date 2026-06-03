@@ -48,7 +48,6 @@
 <div class="status-bar">
   {% for step_val, step_label in pipeline %}
   {% if not forloop.first %}<span class="status-bar__arrow">›</span>{% endif %}
-  {% with is_active=order.status|lower == step_val %}
   <span class="status-bar__step
     {% if order.status == step_val %}status-bar__step--active
     {% elif order.status == 'billed' and step_val != 'billed' %}status-bar__step--done
@@ -57,7 +56,6 @@
     {% endif %}">
     {{ step_label }}
   </span>
-  {% endwith %}
   {% endfor %}
   {% if order.status == 'cancelled' %}
   <span class="status-bar__arrow">›</span>

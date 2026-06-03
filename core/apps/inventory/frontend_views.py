@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views import View
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 
 from apps.inventory.models import (
@@ -56,6 +58,10 @@ class ProductDetailView(LoginRequiredMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         ctx['warehouses'] = Warehouse.objects.filter(is_active=True)
         ctx['low_threshold'] = LOW_STOCK_THRESHOLD
+        ctx['total_stock'] = StockLevel.objects.filter(
+            variant__product=self.object
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        ctx['categories'] = Category.objects.order_by('name')
         return ctx
 
 
@@ -148,3 +154,154 @@ class StockMoveCreateView(LoginRequiredMixin, TemplateView):
             return redirect('inventory:stock-move-create')
 
         return redirect('inventory:stock-levels')
+
+
+def _product_values(post=None, product=None):
+    """Build a flat values dict for the product form template."""
+    if post:
+        return {
+            'name': post.get('name', ''),
+            'sku': post.get('sku', ''),
+            'base_price': post.get('base_price', ''),
+            'category': post.get('category', ''),
+            'description': post.get('description', ''),
+            'is_active': post.get('is_active') == 'on',
+        }
+    if product:
+        return {
+            'name': product.name,
+            'sku': product.sku,
+            'base_price': product.base_price,
+            'category': str(product.category_id) if product.category_id else '',
+            'description': product.description,
+            'is_active': product.is_active,
+        }
+    return {'name': '', 'sku': '', 'base_price': '', 'category': '', 'description': '', 'is_active': True}
+
+
+class ProductCreateView(LoginRequiredMixin, View):
+    template_name = 'inventory/product_form.html'
+
+    def get(self, request):
+        ctx = {
+            'categories': Category.objects.order_by('name'),
+            'action': 'Create',
+            'values': _product_values(),
+        }
+        return render(request, self.template_name, ctx)
+
+    def post(self, request):
+        name = request.POST.get('name', '').strip()
+        sku = request.POST.get('sku', '').strip()
+        base_price = request.POST.get('base_price', '').strip()
+        category_id = request.POST.get('category') or None
+        description = request.POST.get('description', '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        image = request.FILES.get('image')
+
+        errors = {}
+        if not name:
+            errors['name'] = 'Name is required.'
+        if not sku:
+            errors['sku'] = 'SKU is required.'
+        elif Product.objects.filter(sku=sku).exists():
+            errors['sku'] = 'A product with this SKU already exists.'
+        if not base_price:
+            errors['base_price'] = 'Base price is required.'
+        else:
+            try:
+                float(base_price)
+            except ValueError:
+                errors['base_price'] = 'Enter a valid price.'
+
+        if errors:
+            ctx = {
+                'categories': Category.objects.order_by('name'),
+                'action': 'Create',
+                'errors': errors,
+                'values': _product_values(post=request.POST),
+            }
+            return render(request, self.template_name, ctx)
+
+        product = Product.objects.create(
+            name=name, sku=sku, base_price=base_price,
+            category_id=category_id, description=description, is_active=is_active,
+        )
+        if image:
+            product.image = image
+            product.save(update_fields=['image'])
+
+        messages.success(request, f'Product "{product.name}" created.')
+        return redirect('inventory:product-detail', pk=product.pk)
+
+
+class ProductUpdateView(LoginRequiredMixin, View):
+    template_name = 'inventory/product_form.html'
+
+    def get(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        ctx = {
+            'categories': Category.objects.order_by('name'),
+            'action': 'Edit',
+            'product': product,
+            'values': _product_values(product=product),
+        }
+        return render(request, self.template_name, ctx)
+
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+
+        name = request.POST.get('name', '').strip()
+        sku = request.POST.get('sku', '').strip()
+        base_price = request.POST.get('base_price', '').strip()
+        category_id = request.POST.get('category') or None
+        description = request.POST.get('description', '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        image = request.FILES.get('image')
+
+        errors = {}
+        if not name:
+            errors['name'] = 'Name is required.'
+        if not sku:
+            errors['sku'] = 'SKU is required.'
+        elif Product.objects.filter(sku=sku).exclude(pk=pk).exists():
+            errors['sku'] = 'A product with this SKU already exists.'
+        if not base_price:
+            errors['base_price'] = 'Base price is required.'
+        else:
+            try:
+                float(base_price)
+            except ValueError:
+                errors['base_price'] = 'Enter a valid price.'
+
+        if errors:
+            ctx = {
+                'categories': Category.objects.order_by('name'),
+                'action': 'Edit',
+                'product': product,
+                'errors': errors,
+                'values': _product_values(post=request.POST),
+            }
+            return render(request, self.template_name, ctx)
+
+        product.name = name
+        product.sku = sku
+        product.base_price = base_price
+        product.category_id = category_id
+        product.description = description
+        product.is_active = is_active
+        if image:
+            product.image = image
+        product.save()
+
+        messages.success(request, f'Product "{product.name}" updated.')
+        return redirect('inventory:product-detail', pk=product.pk)
+
+
+class ProductDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        name = product.name
+        product.delete()
+        messages.success(request, f'Product "{name}" deleted.')
+        return redirect('inventory:product-list')
