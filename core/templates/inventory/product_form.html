@@ -74,6 +74,23 @@
           <textarea name="description" class="form-control" rows="4">{{ values.description }}</textarea>
         </div>
 
+        {% if not product %}
+        <div>
+          <label class="form-label">Initial Stock Quantity</label>
+          <input type="number" name="initial_qty" min="0" step="1"
+                 class="form-control {% if errors.initial_qty %}is-invalid{% endif %}"
+                 value="{{ values.initial_qty }}"
+                 placeholder="0">
+          {% if errors.initial_qty %}
+          <div class="invalid-feedback">{{ errors.initial_qty }}</div>
+          {% endif %}
+          <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;">
+            <i class="bi bi-info-circle"></i>
+            Units to add to stock immediately after creating. Leave 0 to add stock later via Stock Move.
+          </div>
+        </div>
+        {% endif %}
+
       </div>
     </div>
 

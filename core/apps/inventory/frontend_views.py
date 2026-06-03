@@ -166,6 +166,7 @@ def _product_values(post=None, product=None):
             'category': post.get('category', ''),
             'description': post.get('description', ''),
             'is_active': post.get('is_active') == 'on',
+            'initial_qty': post.get('initial_qty', '0'),
         }
     if product:
         return {
@@ -175,8 +176,9 @@ def _product_values(post=None, product=None):
             'category': str(product.category_id) if product.category_id else '',
             'description': product.description,
             'is_active': product.is_active,
+            'initial_qty': '0',
         }
-    return {'name': '', 'sku': '', 'base_price': '', 'category': '', 'description': '', 'is_active': True}
+    return {'name': '', 'sku': '', 'base_price': '', 'category': '', 'description': '', 'is_active': True, 'initial_qty': '0'}
 
 
 class ProductCreateView(LoginRequiredMixin, View):
@@ -191,6 +193,7 @@ class ProductCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
     def post(self, request):
+        from decimal import Decimal, InvalidOperation
         name = request.POST.get('name', '').strip()
         sku = request.POST.get('sku', '').strip()
         base_price = request.POST.get('base_price', '').strip()
@@ -198,6 +201,7 @@ class ProductCreateView(LoginRequiredMixin, View):
         description = request.POST.get('description', '').strip()
         is_active = request.POST.get('is_active') == 'on'
         image = request.FILES.get('image')
+        initial_qty_raw = request.POST.get('initial_qty', '0').strip() or '0'
 
         errors = {}
         if not name:
@@ -213,6 +217,13 @@ class ProductCreateView(LoginRequiredMixin, View):
                 float(base_price)
             except ValueError:
                 errors['base_price'] = 'Enter a valid price.'
+        try:
+            initial_qty = Decimal(initial_qty_raw)
+            if initial_qty < 0:
+                errors['initial_qty'] = 'Quantity cannot be negative.'
+        except InvalidOperation:
+            errors['initial_qty'] = 'Enter a valid quantity.'
+            initial_qty = Decimal('0')
 
         if errors:
             ctx = {
@@ -231,7 +242,36 @@ class ProductCreateView(LoginRequiredMixin, View):
             product.image = image
             product.save(update_fields=['image'])
 
-        messages.success(request, f'Product "{product.name}" created.')
+        # Create default variant + add to stock if quantity provided
+        if initial_qty > 0:
+            variant = ProductVariant.objects.create(
+                product=product,
+                sku=sku,
+                is_active=True,
+            )
+            warehouse = Warehouse.objects.first()
+            if warehouse:
+                move = StockMove(
+                    variant=variant,
+                    warehouse=warehouse,
+                    move_type=StockMove.MoveType.IN,
+                    quantity=initial_qty,
+                    reference=f'Initial stock — {product.name}',
+                    created_by=request.user,
+                )
+                move.full_clean()
+                move.save()
+                sl, _ = StockLevel.objects.get_or_create(
+                    variant=variant,
+                    warehouse=warehouse,
+                    defaults={'quantity': Decimal('0')},
+                )
+                sl.quantity = (sl.quantity or Decimal('0')) + initial_qty
+                sl.save(update_fields=['quantity'])
+            messages.success(request, f'Product "{product.name}" created with {int(initial_qty)} units in stock.')
+        else:
+            messages.success(request, f'Product "{product.name}" created.')
+
         return redirect('inventory:product-detail', pk=product.pk)
 
 
