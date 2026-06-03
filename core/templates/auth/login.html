@@ -13,7 +13,11 @@
         <p class="text-muted small">Sign in to your account</p>
       </div>
 
-      {% if form.errors %}
+      {% if error %}
+        <div class="alert alert-warning py-2 small">
+          {{ error }}
+        </div>
+      {% elif form.errors %}
         <div class="alert alert-danger py-2 small">
           Invalid email or password. Please try again.
         </div>

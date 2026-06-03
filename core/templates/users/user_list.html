@@ -11,7 +11,7 @@
 </div>
 
 <!-- KPI strip -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);
             padding:var(--space-4) var(--space-6);background:var(--color-card-bg);
             border-bottom:1px solid var(--color-border);">
   <div style="display:flex;align-items:center;gap:var(--space-4);">
@@ -37,6 +37,19 @@
                   letter-spacing:0.05em;font-weight:var(--font-semi);">Active</div>
       <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-success);">
         {{ active_count }}
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:var(--space-4);">
+    <div style="width:36px;height:36px;background:#fff7ed;border-radius:var(--radius-md);
+                display:flex;align-items:center;justify-content:center;color:#f97316;">
+      <i class="bi bi-hourglass-split"></i>
+    </div>
+    <div>
+      <div style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;
+                  letter-spacing:0.05em;font-weight:var(--font-semi);">Pending Approval</div>
+      <div style="font-size:var(--text-xl);font-weight:var(--font-bold);color:#f97316;">
+        {{ pending_count }}
       </div>
     </div>
   </div>
@@ -107,6 +120,10 @@
         <td>
           {% if user.is_active %}
           <span class="badge-status badge-done">Active</span>
+          {% elif user.role == 'customer' %}
+          <span class="badge-status" style="background:#fff7ed;color:#f97316;border:1px solid #fdba74;">
+            <i class="bi bi-hourglass-split"></i> Pending
+          </span>
           {% else %}
           <span class="badge-status badge-cancelled">Inactive</span>
           {% endif %}

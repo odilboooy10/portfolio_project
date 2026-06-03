@@ -1,0 +1,94 @@
+{% extends "storefront/base.html" %}
+{% block title %}Order {{ order.reference }} — ERP Shop{% endblock title %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+  <div>
+    <a href="{% url 'store:order-list' %}" class="btn btn-outline-secondary btn-sm me-2">
+      <i class="bi bi-arrow-left"></i> My Orders
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-printer"></i> Print Receipt
+    </button>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="mb-0 fw-bold">Order {{ order.reference }}</h5>
+      <small class="text-muted">Placed on {{ order.confirmed_at|date:"d M Y, H:i" }}</small>
+    </div>
+    <div>
+      {% if order.status == 'confirmed' %}
+      <span class="badge bg-primary fs-6">Confirmed</span>
+      {% elif order.status == 'in_progress' %}
+      <span class="badge bg-info text-dark fs-6">In Progress</span>
+      {% elif order.status == 'done' %}
+      <span class="badge bg-success fs-6">Completed</span>
+      {% elif order.status == 'cancelled' %}
+      <span class="badge bg-danger fs-6">Cancelled</span>
+      {% else %}
+      <span class="badge bg-secondary fs-6">{{ order.status }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Product</th>
+          <th>SKU</th>
+          <th class="text-center">Qty</th>
+          <th class="text-end">Unit Price</th>
+          <th class="text-end">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in order.lines.all %}
+        <tr>
+          <td class="fw-semibold">{{ line.variant.product.name }}</td>
+          <td><small class="text-muted">{{ line.variant.sku }}</small></td>
+          <td class="text-center">{{ line.quantity|floatformat:0 }}</td>
+          <td class="text-end">${{ line.unit_price }}</td>
+          <td class="text-end fw-semibold">${{ line.line_total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="table-light">
+        <tr>
+          <td colspan="4" class="text-end fw-bold">Order Total</td>
+          <td class="text-end fw-bold fs-5">${{ total|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {% if invoice %}
+  <div class="card-footer">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <span class="fw-semibold">Invoice:</span> {{ invoice.reference }}
+      </div>
+      <div>
+        {% if invoice.status == 'paid' %}
+        <span class="badge bg-success">
+          <i class="bi bi-check-circle"></i> Paid
+          {% if invoice.paid_at %}— {{ invoice.paid_at|date:"d M Y" }}{% endif %}
+        </span>
+        {% else %}
+        <span class="badge bg-warning text-dark">
+          <i class="bi bi-clock"></i> Payment Pending
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mt-4 text-center text-muted small no-print">
+  Thank you for your purchase. Questions? Contact our support team.
+</div>
+{% endblock content %}

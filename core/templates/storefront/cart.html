@@ -1,0 +1,105 @@
+{% extends "storefront/base.html" %}
+{% block title %}Cart — ERP Shop{% endblock title %}
+
+{% block content %}
+<h4 class="fw-bold mb-4"><i class="bi bi-cart3"></i> Your Cart</h4>
+
+{% if items %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th class="text-end">Unit Price</th>
+              <th class="text-center" style="width: 130px;">Qty</th>
+              <th class="text-end">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <td>
+                <a href="{% url 'store:product-detail' item.variant.product.pk %}" class="text-decoration-none fw-semibold">
+                  {{ item.variant.product.name }}
+                </a>
+                {% if item.variant.attribute_values.all %}
+                <small class="d-block text-muted">
+                  {{ item.variant.attribute_values.all|join:", " }}
+                </small>
+                {% endif %}
+              </td>
+              <td><small class="text-muted">{{ item.variant.sku }}</small></td>
+              <td class="text-end">${{ item.variant.effective_price }}</td>
+              <td>
+                <form method="post" action="{% url 'store:update-cart' %}" class="d-flex gap-1">
+                  {% csrf_token %}
+                  <input type="hidden" name="item_id" value="{{ item.pk }}">
+                  <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="999"
+                         class="form-control form-control-sm text-center" style="width: 65px;">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                </form>
+              </td>
+              <td class="text-end fw-semibold">${{ item.line_total|floatformat:2 }}</td>
+              <td>
+                <form method="post" action="{% url 'store:update-cart' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="item_id" value="{{ item.pk }}">
+                  <input type="hidden" name="quantity" value="0">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3">Order Summary</h6>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Subtotal</span>
+          <span class="fw-semibold">${{ total|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span class="text-muted">Shipping</span>
+          <span class="text-success">Free</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between mb-4">
+          <span class="fw-bold">Total</span>
+          <span class="fw-bold fs-5">${{ total|floatformat:2 }}</span>
+        </div>
+        <a href="{% url 'store:checkout' %}" class="btn btn-primary w-100">
+          <i class="bi bi-credit-card"></i> Proceed to Checkout
+        </a>
+        <a href="{% url 'store:catalog' %}" class="btn btn-outline-secondary w-100 mt-2">
+          <i class="bi bi-arrow-left"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
+  <h5 class="mt-3 text-muted">Your cart is empty.</h5>
+  <a href="{% url 'store:catalog' %}" class="btn btn-primary mt-3">
+    <i class="bi bi-grid"></i> Browse Products
+  </a>
+</div>
+{% endif %}
+{% endblock content %}

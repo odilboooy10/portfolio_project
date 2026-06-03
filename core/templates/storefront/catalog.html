@@ -1,0 +1,102 @@
+{% extends "storefront/base.html" %}
+{% block title %}Catalog — ERP Shop{% endblock title %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0"><i class="bi bi-grid"></i> Product Catalog</h4>
+</div>
+
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-5">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" name="q" class="form-control" placeholder="Search products…" value="{{ q }}">
+    </div>
+  </div>
+  <div class="col-md-4">
+    <select name="category" class="form-select">
+      <option value="">All Categories</option>
+      {% for cat in categories %}
+      <option value="{{ cat.pk }}" {% if current_category == cat.pk|stringformat:"s" %}selected{% endif %}>
+        {{ cat }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{% url 'store:catalog' %}" class="btn btn-outline-secondary">Clear</a>
+  </div>
+</form>
+
+{% if products_data %}
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+  {% for item in products_data %}
+  <div class="col">
+    <div class="card h-100 product-card">
+      {% if item.product.image %}
+      <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}"
+           style="height: 180px; object-fit: cover;">
+      {% else %}
+      <div class="d-flex align-items-center justify-content-center bg-light" style="height: 180px;">
+        <i class="bi bi-box-seam text-secondary" style="font-size: 3rem;"></i>
+      </div>
+      {% endif %}
+
+      <div class="card-body d-flex flex-column">
+        <h6 class="card-title fw-semibold">{{ item.product.name }}</h6>
+        {% if item.product.category %}
+        <small class="text-muted mb-1">{{ item.product.category }}</small>
+        {% endif %}
+
+        <div class="mb-2">
+          {% if item.total_stock <= 0 %}
+          <span class="badge stock-badge-out">Out of Stock</span>
+          {% elif item.total_stock < 5 %}
+          <span class="badge stock-badge-low">Low Stock ({{ item.total_stock|floatformat:0 }} left)</span>
+          {% else %}
+          <span class="badge stock-badge-in">In Stock</span>
+          {% endif %}
+        </div>
+
+        <p class="fw-bold text-dark mb-0 mt-auto">
+          ${{ item.product.base_price }}
+        </p>
+      </div>
+
+      <div class="card-footer bg-transparent border-top-0 pb-3">
+        <a href="{% url 'store:product-detail' item.product.pk %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+          View Details
+        </a>
+        {% if item.first_variant and item.total_stock > 0 %}
+        <form method="post" action="{% url 'store:add-to-cart' %}">
+          {% csrf_token %}
+          <input type="hidden" name="variant_id" value="{{ item.first_variant.pk }}">
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-cart-plus"></i> Add to Cart
+          </button>
+        </form>
+        {% elif item.total_stock <= 0 %}
+        <button class="btn btn-secondary btn-sm w-100" disabled>Out of Stock</button>
+        {% else %}
+        <a href="{% url 'store:product-detail' item.product.pk %}" class="btn btn-primary btn-sm w-100">
+          <i class="bi bi-cart-plus"></i> Add to Cart
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+  <h5 class="mt-3 text-muted">
+    {% if q %}No products match your search.{% else %}No products available yet.{% endif %}
+  </h5>
+  {% if q %}
+  <a href="{% url 'store:catalog' %}" class="btn btn-outline-primary mt-2">View All Products</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock content %}

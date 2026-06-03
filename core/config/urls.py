@@ -22,6 +22,7 @@ urlpatterns = [
     path('purchase/',    include('apps.purchase.urls_frontend',    namespace='purchase')),
     path('accounting/',  include('apps.accounting.urls_frontend',  namespace='accounting')),
     path('users/',       include('apps.users.urls_frontend',       namespace='users')),
+    path('store/',       include('apps.storefront.urls',            namespace='store')),
 
     # API v1
     path('api/v1/', include('config.api_urls')),

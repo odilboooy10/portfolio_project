@@ -41,6 +41,7 @@ class UserListView(AdminRequiredMixin, ListView):
         ctx['current_active'] = self.request.GET.get('active', '')
         ctx['total_count'] = User.objects.count()
         ctx['active_count'] = User.objects.filter(is_active=True).count()
+        ctx['pending_count'] = User.objects.filter(role='customer', is_active=False).count()
         return ctx
 
 

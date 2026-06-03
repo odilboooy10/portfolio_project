@@ -1,0 +1,114 @@
+{% extends "storefront/base.html" %}
+{% block title %}Checkout — ERP Shop{% endblock title %}
+
+{% block content %}
+<h4 class="fw-bold mb-4"><i class="bi bi-credit-card"></i> Checkout</h4>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-person"></i> Contact Information
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" value="{{ user.get_full_name|default:user.email }}" disabled>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" value="{{ user.email }}" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-geo-alt"></i> Shipping Address
+        </div>
+        <div class="card-body">
+          <div class="mb-0">
+            <label class="form-label">Delivery Address</label>
+            <textarea name="address" class="form-control" rows="3" placeholder="Street, City, State, ZIP" required></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-credit-card-2-front"></i> Payment (Demo)
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info small mb-3">
+            <i class="bi bi-info-circle"></i>
+            This is a demo storefront. Payment is simulated — no real charge will occur.
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Card Number</label>
+            <input type="text" class="form-control" placeholder="4242 4242 4242 4242" disabled>
+          </div>
+          <div class="row g-3">
+            <div class="col">
+              <label class="form-label">Expiry</label>
+              <input type="text" class="form-control" placeholder="MM / YY" disabled>
+            </div>
+            <div class="col">
+              <label class="form-label">CVC</label>
+              <input type="text" class="form-control" placeholder="123" disabled>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success btn-lg w-100">
+        <i class="bi bi-bag-check"></i> Place Order
+      </button>
+    </form>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-receipt"></i> Order Summary
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Item</th>
+              <th class="text-center">Qty</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <td>
+                <span class="fw-semibold">{{ item.variant.product.name }}</span>
+                <small class="d-block text-muted">{{ item.variant.sku }}</small>
+              </td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-end">${{ item.line_total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" class="fw-bold">Total</td>
+              <td class="text-end fw-bold">${{ total|floatformat:2 }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'store:cart' %}" class="btn btn-outline-secondary btn-sm w-100">
+          <i class="bi bi-pencil"></i> Edit Cart
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

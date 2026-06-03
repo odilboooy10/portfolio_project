@@ -16,6 +16,11 @@ class LoginView(View):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            if user.role == 'customer':
+                return render(request, self.template_name, {
+                    'form': form,
+                    'error': 'Customer accounts use the store login at /store/login/'
+                })
             login(request, user)
             return redirect(request.POST.get('next') or 'dashboard:index')
         return render(request, self.template_name, {'form': form})

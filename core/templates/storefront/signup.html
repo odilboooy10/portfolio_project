@@ -1,0 +1,72 @@
+{% extends "storefront/base.html" %}
+{% block title %}Create Account — ERP Shop{% endblock title %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-4 fw-bold"><i class="bi bi-person-plus"></i> Create Account</h4>
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="row g-3 mb-3">
+            <div class="col">
+              <label class="form-label">First Name</label>
+              <input type="text" name="first_name" class="form-control {% if errors.first_name %}is-invalid{% endif %}"
+                     value="{{ first_name }}" required>
+              {% if errors.first_name %}
+              <div class="invalid-feedback">{{ errors.first_name }}</div>
+              {% endif %}
+            </div>
+            <div class="col">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="last_name" class="form-control" value="{{ last_name }}">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <input type="email" name="email" class="form-control {% if errors.email %}is-invalid{% endif %}"
+                   value="{{ email }}" required>
+            {% if errors.email %}
+            <div class="invalid-feedback">{{ errors.email }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password1" class="form-control {% if errors.password1 %}is-invalid{% endif %}" required>
+            {% if errors.password1 %}
+            <div class="invalid-feedback">{{ errors.password1 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" name="password2" class="form-control {% if errors.password2 %}is-invalid{% endif %}" required>
+            {% if errors.password2 %}
+            <div class="invalid-feedback">{{ errors.password2 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="alert alert-info small mb-3">
+            <i class="bi bi-info-circle"></i>
+            After registering, your account will need admin approval before you can log in.
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-person-check"></i> Create Account
+          </button>
+        </form>
+
+        <hr>
+        <p class="text-center mb-0 small">
+          Already have an account? <a href="{% url 'store:login' %}">Sign In</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

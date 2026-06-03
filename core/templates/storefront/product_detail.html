@@ -1,0 +1,78 @@
+{% extends "storefront/base.html" %}
+{% block title %}{{ product.name }} — ERP Shop{% endblock title %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'store:catalog' %}">Catalog</a></li>
+    <li class="breadcrumb-item active">{{ product.name }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    {% if product.image %}
+    <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
+    {% else %}
+    <div class="d-flex align-items-center justify-content-center bg-light rounded" style="height: 300px;">
+      <i class="bi bi-box-seam text-secondary" style="font-size: 5rem;"></i>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-8">
+    <h3 class="fw-bold">{{ product.name }}</h3>
+    {% if product.category %}
+    <p class="text-muted mb-1"><i class="bi bi-tag"></i> {{ product.category }}</p>
+    {% endif %}
+    <p class="fs-4 fw-bold text-dark">${{ product.base_price }}</p>
+
+    {% if product.description %}
+    <p class="text-muted">{{ product.description }}</p>
+    {% endif %}
+
+    {% if variants_data %}
+    <h6 class="fw-semibold mt-4 mb-3">Select Variant</h6>
+    {% for vd in variants_data %}
+    <div class="card mb-3 {% if vd.stock <= 0 %}border-secondary{% endif %}">
+      <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
+        <div>
+          <span class="fw-semibold">{{ vd.variant }}</span>
+          <small class="text-muted ms-2">SKU: {{ vd.variant.sku }}</small>
+          {% if vd.variant.price_override %}
+          <span class="ms-2 text-primary fw-bold">${{ vd.variant.price_override }}</span>
+          {% endif %}
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          {% if vd.stock <= 0 %}
+          <span class="badge stock-badge-out">Out of Stock</span>
+          <button class="btn btn-sm btn-secondary" disabled>Add</button>
+          {% elif vd.stock < 5 %}
+          <span class="badge stock-badge-low">{{ vd.stock|floatformat:0 }} left</span>
+          <form method="post" action="{% url 'store:add-to-cart' %}">
+            {% csrf_token %}
+            <input type="hidden" name="variant_id" value="{{ vd.variant.pk }}">
+            <button type="submit" class="btn btn-sm btn-primary">
+              <i class="bi bi-cart-plus"></i> Add
+            </button>
+          </form>
+          {% else %}
+          <span class="badge stock-badge-in">In Stock</span>
+          <form method="post" action="{% url 'store:add-to-cart' %}">
+            {% csrf_token %}
+            <input type="hidden" name="variant_id" value="{{ vd.variant.pk }}">
+            <button type="submit" class="btn btn-sm btn-primary">
+              <i class="bi bi-cart-plus"></i> Add
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-warning">No variants available for this product.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}
