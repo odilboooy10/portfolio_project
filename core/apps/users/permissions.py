@@ -1,39 +1,22 @@
 """
 Central role-based permission classes for the ERP.
 
-Import from here in every app's views.py instead of defining local permission classes.
-
 Permission Matrix:
-                  Admin  Manager  Sales  Purchase  Accountant  Viewer
-─────────────────────────────────────────────────────────────────────
-Inventory  Read     ✅     ✅      ✅      ✅         ✅         ✅
-Inventory  Write    ✅     ✅      ❌      ✅         ❌         ❌
-Sales      Read     ✅     ✅      ✅      ❌         ✅         ✅
-Sales      Write    ✅     ✅      ✅      ❌         ❌         ❌
-CRM        Read     ✅     ✅      ✅      ❌         ❌         ✅
-CRM        Write    ✅     ✅      ✅      ❌         ❌         ❌
-Purchase   Read     ✅     ✅      ❌      ✅         ✅         ✅
-Purchase   Write    ✅     ✅      ❌      ✅         ❌         ❌
-Accounting Read     ✅     ✅      ❌      ❌         ✅         ❌
-Accounting Write    ✅     ✅      ❌      ❌         ✅         ❌
-Users      All      ✅     ❌      ❌      ❌         ❌         ❌
+                  Admin   Staff
+─────────────────────────────────
+All modules         ✅      ✅
+Users management    ✅      ❌
 """
 
-from rest_framework.permissions import BasePermission, SAFE_METHODS
-
-
-def _role(user):
-    return getattr(user, 'role', None)
+from rest_framework.permissions import BasePermission, IsAuthenticated
 
 
 def _can(user, *roles):
     return bool(
         user and user.is_authenticated
-        and (_role(user) in roles or user.is_superuser)
+        and (getattr(user, 'role', None) in roles or user.is_superuser)
     )
 
-
-# ── Generic ────────────────────────────────────────────────────────────────
 
 class IsAdmin(BasePermission):
     def has_permission(self, request, view):
@@ -42,52 +25,27 @@ class IsAdmin(BasePermission):
 
 class IsManager(BasePermission):
     def has_permission(self, request, view):
-        return _can(request.user, 'admin', 'manager')
+        return _can(request.user, 'admin', 'staff')
 
 
-# ── Module-scoped ──────────────────────────────────────────────────────────
-
-class InventoryPermission(BasePermission):
-    def has_permission(self, request, view):
-        if not (request.user and request.user.is_authenticated):
-            return False
-        if request.method in SAFE_METHODS:
-            return True  # all authenticated users can read
-        return _can(request.user, 'admin', 'manager', 'purchase')
+class InventoryPermission(IsAuthenticated):
+    pass
 
 
-class SalesPermission(BasePermission):
-    def has_permission(self, request, view):
-        if not (request.user and request.user.is_authenticated):
-            return False
-        if request.method in SAFE_METHODS:
-            return _can(request.user, 'admin', 'manager', 'sales', 'accountant', 'viewer')
-        return _can(request.user, 'admin', 'manager', 'sales')
+class SalesPermission(IsAuthenticated):
+    pass
 
 
-class CRMPermission(BasePermission):
-    def has_permission(self, request, view):
-        if not (request.user and request.user.is_authenticated):
-            return False
-        if request.method in SAFE_METHODS:
-            return _can(request.user, 'admin', 'manager', 'sales', 'viewer')
-        return _can(request.user, 'admin', 'manager', 'sales')
+class CRMPermission(IsAuthenticated):
+    pass
 
 
-class PurchasePermission(BasePermission):
-    def has_permission(self, request, view):
-        if not (request.user and request.user.is_authenticated):
-            return False
-        if request.method in SAFE_METHODS:
-            return _can(request.user, 'admin', 'manager', 'purchase', 'accountant', 'viewer')
-        return _can(request.user, 'admin', 'manager', 'purchase')
+class PurchasePermission(IsAuthenticated):
+    pass
 
 
-class AccountingPermission(BasePermission):
-    def has_permission(self, request, view):
-        if not (request.user and request.user.is_authenticated):
-            return False
-        return _can(request.user, 'admin', 'manager', 'accountant')
+class AccountingPermission(IsAuthenticated):
+    pass
 
 
 class UsersPermission(BasePermission):

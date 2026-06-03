@@ -16,13 +16,9 @@ class User(AuditableMixin, AbstractUser):
 
     class Role(models.TextChoices):
         ADMIN = 'admin', 'Admin'
-        MANAGER = 'manager', 'Manager'
-        SALES = 'sales', 'Sales'
-        PURCHASE = 'purchase', 'Purchase'
-        ACCOUNTANT = 'accountant', 'Accountant'
-        VIEWER = 'viewer', 'Viewer'
+        STAFF = 'staff', 'Staff'
 
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.VIEWER)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.STAFF)
     avatar = models.ImageField(upload_to='users/avatars/', blank=True, null=True)
     phone = models.CharField(max_length=30, blank=True)
     is_verified = models.BooleanField(default=False)
@@ -45,4 +41,4 @@ class User(AuditableMixin, AbstractUser):
 
     @property
     def is_manager(self):
-        return self.role in (self.Role.ADMIN, self.Role.MANAGER) or self.is_superuser
+        return self.role in (self.Role.ADMIN, self.Role.STAFF) or self.is_superuser

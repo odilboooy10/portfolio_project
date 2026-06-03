@@ -14,7 +14,7 @@ class TestUserModel:
         assert user.full_name == user.email
 
     def test_is_admin_for_superuser(self):
-        user = UserFactory(is_superuser=True, role='viewer')
+        user = UserFactory(is_superuser=True, role='staff')
         assert user.is_admin is True
 
     def test_is_admin_for_admin_role(self):
@@ -25,13 +25,13 @@ class TestUserModel:
         user = UserFactory(role='admin')
         assert user.is_manager is True
 
-    def test_is_manager_for_manager_role(self):
-        user = ManagerUserFactory()
+    def test_is_manager_for_staff_role(self):
+        user = UserFactory(role='staff')
         assert user.is_manager is True
 
-    def test_viewer_is_not_manager(self):
-        user = UserFactory(role='viewer')
-        assert user.is_manager is False
+    def test_staff_is_not_admin(self):
+        user = UserFactory(role='staff')
+        assert user.is_admin is False
 
 
 @pytest.mark.django_db

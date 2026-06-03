@@ -15,14 +15,14 @@ class UserFactory(DjangoModelFactory):
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
     password = factory.PostGenerationMethodCall('set_password', 'pass123')
-    role = 'viewer'
+    role = 'staff'
     is_active = True
 
 
 class ManagerUserFactory(UserFactory):
-    role = 'manager'
-    email = factory.Sequence(lambda n: f'manager{n}@erp.local')
-    username = factory.Sequence(lambda n: f'manager{n}')
+    role = 'staff'
+    email = factory.Sequence(lambda n: f'staff{n}@erp.local')
+    username = factory.Sequence(lambda n: f'staff{n}')
 
 
 # ── Inventory ─────────────────────────────────────────────────────────────────

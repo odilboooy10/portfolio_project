@@ -25,7 +25,7 @@ def manager_user(db):
         email='manager@erp.local',
         username='manager',
         password='pass123',
-        role='manager',
+        role='staff',
     )
 
 
@@ -36,7 +36,7 @@ def sales_user(db):
         email='sales@erp.local',
         username='salesrep',
         password='pass123',
-        role='sales',
+        role='staff',
     )
 
 
