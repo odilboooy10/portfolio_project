@@ -99,7 +99,10 @@
       <div class="panel-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
 
         <div>
-          <label class="form-label">Product Image</label>
+          <label class="form-label">
+            Product Image
+            {% if not product %}<span style="color:var(--color-danger);">*</span>{% endif %}
+          </label>
           {% if product.image %}
           <div style="margin-bottom:var(--space-2);">
             <img src="{{ product.image.url }}" alt="Current image"
@@ -110,7 +113,10 @@
             </div>
           </div>
           {% endif %}
-          <input type="file" name="image" class="form-control" accept="image/*">
+          <input type="file" name="image"
+                 class="form-control {% if errors.image %}is-invalid{% endif %}"
+                 accept="image/*" {% if not product %}required{% endif %}>
+          {% if errors.image %}<div class="invalid-feedback">{{ errors.image }}</div>{% endif %}
         </div>
 
         <div>

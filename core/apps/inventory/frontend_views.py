@@ -217,6 +217,8 @@ class ProductCreateView(LoginRequiredMixin, View):
                 float(base_price)
             except ValueError:
                 errors['base_price'] = 'Enter a valid price.'
+        if not image:
+            errors['image'] = 'Product image is required.'
         try:
             initial_qty = Decimal(initial_qty_raw)
             if initial_qty < 0:
