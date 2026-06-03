@@ -15,9 +15,11 @@
     <a href="{% url 'inventory:stock-move-create' %}" class="btn-erp-ghost">
       <i class="bi bi-arrow-left-right"></i> Stock Move
     </a>
+    {% if request.user.is_admin %}
     <a href="{% url 'inventory:product-create' %}" class="btn-erp-primary">
       <i class="bi bi-plus-lg"></i> Add Product
     </a>
+    {% endif %}
   </div>
 </div>
 
