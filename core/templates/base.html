@@ -129,6 +129,44 @@
       font-weight: var(--font-semi);
       color: var(--color-text-primary);
     }
+    .topbar-crumb {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+    .topbar-crumb-sep {
+      color: var(--color-border);
+      font-size: 11px;
+    }
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+    .topbar-icon-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px; height: 30px;
+      border-radius: var(--radius-md);
+      color: var(--color-text-muted);
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+    .topbar-icon-link:hover {
+      background: var(--color-page-bg);
+      color: var(--color-text-primary);
+    }
+    .topbar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--color-border);
+    }
+    @media (max-width: 768px) {
+      .topbar-meta, .topbar-divider { display: none; }
+    }
 
     #page-content { flex: 1; }
 
@@ -503,8 +541,20 @@
             style="border:none;background:transparent;color:var(--color-text-secondary);">
       <i class="bi bi-list fs-5"></i>
     </button>
+    {% if request.resolver_match.namespace and request.resolver_match.namespace != 'dashboard' %}
+      <span class="topbar-crumb">{{ request.resolver_match.namespace|capfirst }}</span>
+      <i class="bi bi-chevron-right topbar-crumb-sep"></i>
+    {% endif %}
     <span class="topbar-title">{% block page_title %}{% endblock %}</span>
+
     <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="topbar-meta">
+        <i class="bi bi-calendar3"></i> {% now "D, d M Y" %}
+      </span>
+      <div class="topbar-divider"></div>
+      <a href="/api/v1/docs/" target="_blank" class="topbar-icon-link" title="API Docs">
+        <i class="bi bi-braces"></i>
+      </a>
       <span class="badge-status badge-confirmed" style="text-transform:capitalize;">
         {{ user.role }}
       </span>
