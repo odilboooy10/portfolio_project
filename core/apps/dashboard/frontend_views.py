@@ -102,12 +102,21 @@ class DashboardView(LoginRequiredMixin, View):
         ]
 
         # ── Order pipeline ───────────────────────────────────────────────────
-        order_pipeline = list(
+        pipeline_qs = list(
             SaleOrder.objects
             .values('status')
             .annotate(count=Count('id'), total_revenue=Sum(F('lines__quantity') * F('lines__unit_price')))
             .order_by('status')
         )
+        order_pipeline = json.dumps([
+            {
+                'status': row['status'],
+                'count': row['count'],
+                'total_revenue': float(row['total_revenue'] or 0),
+            }
+            for row in pipeline_qs
+        ])
+        has_pipeline = bool(pipeline_qs)
 
         # ── Recent activity ──────────────────────────────────────────────────
         events = []
@@ -138,5 +147,6 @@ class DashboardView(LoginRequiredMixin, View):
             'chart_data': json.dumps(chart_data),
             'low_stock': low_stock,
             'order_pipeline': order_pipeline,
+            'has_pipeline': has_pipeline,
             'recent_activity': events[:15],
         })

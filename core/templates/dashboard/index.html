@@ -8,27 +8,31 @@
 <!-- ── KPI Cards ───────────────────────────────────────────── -->
 <div class="row g-3 mb-4">
 
+  <!-- Revenue — dominant card -->
   <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card d-flex align-items-center gap-3">
-      <div class="kpi-icon bg-primary-subtle text-primary">
+    <div class="kpi-card d-flex align-items-center gap-3" style="border-left: 3px solid var(--color-primary);">
+      <div class="kpi-icon" style="background: var(--color-primary-light); color: var(--color-primary); width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
         <i class="bi bi-currency-dollar"></i>
       </div>
-      <div>
+      <div style="min-width: 0;">
         <div class="kpi-label">Revenue this month</div>
-        <div class="kpi-value">${{ summary.revenue.this_month|floatformat:0 }}</div>
+        <div class="kpi-value" style="color: var(--color-primary);">${{ summary.revenue.this_month|floatformat:0 }}</div>
         {% if summary.revenue.mom_change_pct is not None %}
           <small class="{% if summary.revenue.mom_change_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
             <i class="bi bi-arrow-{% if summary.revenue.mom_change_pct >= 0 %}up{% else %}down{% endif %}"></i>
             {{ summary.revenue.mom_change_pct }}% vs last month
           </small>
+        {% else %}
+          <small class="text-muted">No prior month data</small>
         {% endif %}
       </div>
     </div>
   </div>
 
+  <!-- Active orders -->
   <div class="col-sm-6 col-xl-3">
     <div class="kpi-card d-flex align-items-center gap-3">
-      <div class="kpi-icon bg-success-subtle text-success">
+      <div class="kpi-icon" style="background: var(--color-success-light, #d1fae5); color: var(--color-success); width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
         <i class="bi bi-bag-check"></i>
       </div>
       <div>
@@ -39,27 +43,35 @@
     </div>
   </div>
 
+  <!-- Overdue invoices — danger state colors the number -->
   <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card d-flex align-items-center gap-3">
-      <div class="kpi-icon {% if summary.invoices.overdue > 0 %}bg-danger-subtle text-danger{% else %}bg-success-subtle text-success{% endif %}">
+    <div class="kpi-card d-flex align-items-center gap-3"
+         {% if summary.invoices.overdue > 0 %}style="border-left: 3px solid var(--color-danger);"{% endif %}>
+      <div class="kpi-icon" style="background: {% if summary.invoices.overdue > 0 %}var(--color-danger-light, #fee2e2); color: var(--color-danger){% else %}var(--color-success-light, #d1fae5); color: var(--color-success){% endif %}; width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
         <i class="bi bi-receipt"></i>
       </div>
       <div>
         <div class="kpi-label">Overdue invoices</div>
-        <div class="kpi-value">{{ summary.invoices.overdue }}</div>
+        <div class="kpi-value" {% if summary.invoices.overdue > 0 %}style="color: var(--color-danger);"{% endif %}>
+          {{ summary.invoices.overdue }}
+        </div>
         <small class="text-muted">{{ summary.crm.open_leads }} open leads</small>
       </div>
     </div>
   </div>
 
+  <!-- Low stock — warning state colors the number -->
   <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card d-flex align-items-center gap-3">
-      <div class="kpi-icon {% if summary.inventory.low_stock_variants > 0 %}bg-warning-subtle text-warning{% else %}bg-success-subtle text-success{% endif %}">
+    <div class="kpi-card d-flex align-items-center gap-3"
+         {% if summary.inventory.low_stock_variants > 0 %}style="border-left: 3px solid var(--color-warning);"{% endif %}>
+      <div class="kpi-icon" style="background: {% if summary.inventory.low_stock_variants > 0 %}var(--color-warning-light, #fef3c7); color: var(--color-warning){% else %}var(--color-success-light, #d1fae5); color: var(--color-success){% endif %}; width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
         <i class="bi bi-boxes"></i>
       </div>
       <div>
         <div class="kpi-label">Low stock variants</div>
-        <div class="kpi-value">{{ summary.inventory.low_stock_variants }}</div>
+        <div class="kpi-value" {% if summary.inventory.low_stock_variants > 0 %}style="color: var(--color-warning);"{% endif %}>
+          {{ summary.inventory.low_stock_variants }}
+        </div>
         <small class="text-muted">{{ summary.purchases.pending }} pending POs</small>
       </div>
     </div>
@@ -71,8 +83,8 @@
 <div class="row g-3 mb-4">
 
   <div class="col-xl-7">
-    <div class="card-panel h-100">
-      <div class="panel-header d-flex align-items-center justify-content-between">
+    <div class="panel h-100">
+      <div class="panel-header">
         <span><i class="bi bi-bar-chart-line me-2 text-primary"></i>Monthly Revenue</span>
         <span class="text-muted" style="font-size:.78rem;">Last 12 months</span>
       </div>
@@ -83,7 +95,7 @@
   </div>
 
   <div class="col-xl-5">
-    <div class="card-panel h-100">
+    <div class="panel h-100">
       <div class="panel-header">
         <i class="bi bi-activity me-2 text-primary"></i>Recent Activity
       </div>
@@ -121,30 +133,35 @@
 <div class="row g-3">
 
   <div class="col-xl-6">
-    <div class="card-panel">
+    <div class="panel">
       <div class="panel-header">
-        <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Low Stock Alert
+        <span><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Low Stock Alert</span>
+        {% if low_stock %}
+          <span class="badge rounded-pill" style="background: var(--color-warning-light, #fef3c7); color: var(--color-warning); font-size: .72rem;">
+            {{ low_stock|length }} item{{ low_stock|length|pluralize }}
+          </span>
+        {% endif %}
       </div>
       <div class="panel-body p-0">
         {% if low_stock %}
           <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0">
-              <thead class="table-light">
+            <table class="erp-table">
+              <thead>
                 <tr>
-                  <th class="px-3">Product</th>
+                  <th style="padding-left: var(--space-5);">Product</th>
                   <th>SKU</th>
                   <th>Warehouse</th>
-                  <th class="text-end pe-3">Qty</th>
+                  <th class="text-end" style="padding-right: var(--space-5);">Qty</th>
                 </tr>
               </thead>
               <tbody>
                 {% for item in low_stock %}
                   <tr>
-                    <td class="px-3">{{ item.product_name }}</td>
-                    <td class="text-muted small">{{ item.variant_sku }}</td>
-                    <td class="text-muted small">{{ item.warehouse }}</td>
-                    <td class="text-end pe-3">
-                      <span class="badge {% if item.quantity <= 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                    <td style="padding-left: var(--space-5); font-weight: var(--font-medium); color: var(--color-text-primary);">{{ item.product_name }}</td>
+                    <td style="font-family: monospace; font-size: .78rem;">{{ item.variant_sku }}</td>
+                    <td>{{ item.warehouse }}</td>
+                    <td class="text-end" style="padding-right: var(--space-5);">
+                      <span class="badge rounded-pill {% if item.quantity <= 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                         {{ item.quantity }}
                       </span>
                     </td>
@@ -154,27 +171,29 @@
             </table>
           </div>
         {% else %}
-          <p class="text-muted text-center py-4 small mb-0">All stock levels are healthy.</p>
+          <div class="text-center py-4">
+            <i class="bi bi-check-circle text-success" style="font-size: 1.5rem; display: block; margin-bottom: .5rem;"></i>
+            <p class="text-muted small mb-0">All stock levels are healthy.</p>
+          </div>
         {% endif %}
       </div>
     </div>
   </div>
 
   <div class="col-xl-6">
-    <div class="card-panel">
+    <div class="panel">
       <div class="panel-header">
-        <i class="bi bi-funnel me-2 text-primary"></i>Order Pipeline
+        <span><i class="bi bi-funnel me-2 text-primary"></i>Order Pipeline</span>
       </div>
       <div class="panel-body">
-        {% for row in order_pipeline %}
-          <div class="d-flex align-items-center mb-3">
-            <span class="text-capitalize me-auto" style="font-size:.87rem;">{{ row.status|cut:"_" }}</span>
-            <span class="badge bg-primary-subtle text-primary me-2">{{ row.count }}</span>
-            <span class="text-muted small">${{ row.total_revenue|default:0|floatformat:0 }}</span>
+        {% if has_pipeline %}
+          <canvas id="pipelineChart" height="140"></canvas>
+        {% else %}
+          <div class="text-center py-4">
+            <i class="bi bi-inbox text-muted" style="font-size: 1.5rem; display: block; margin-bottom: .5rem;"></i>
+            <p class="text-muted small mb-0">No orders yet.</p>
           </div>
-        {% empty %}
-          <p class="text-muted text-center py-2 small">No orders yet.</p>
-        {% endfor %}
+        {% endif %}
       </div>
     </div>
   </div>
@@ -185,47 +204,136 @@
 {% block extra_js %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const labels = {{ chart_labels|safe }};
-    const data   = {{ chart_data|safe }};
 
-    const ctx = document.getElementById('revenueChart');
-    if (!ctx) return;
+    /* ── Revenue chart ─────────────────────────────────────── */
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+      const labels = {{ chart_labels|safe }};
+      const data   = {{ chart_data|safe }};
 
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Revenue ($)',
-          data,
-          backgroundColor: 'rgba(59, 91, 219, 0.15)',
-          borderColor: 'rgba(59, 91, 219, 0.9)',
-          borderWidth: 2,
-          borderRadius: 6,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => '$' + Number(ctx.raw).toLocaleString()
+      const gradient = revenueCtx.getContext('2d').createLinearGradient(0, 0, 0, 250);
+      gradient.addColorStop(0, 'rgba(59, 91, 219, 0.35)');
+      gradient.addColorStop(1, 'rgba(59, 91, 219, 0.02)');
+
+      new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Revenue ($)',
+            data,
+            backgroundColor: gradient,
+            borderColor: 'rgba(59, 91, 219, 0.85)',
+            borderWidth: 2,
+            borderRadius: 5,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleColor: '#94a3b8',
+              bodyColor: '#f1f5f9',
+              padding: 10,
+              cornerRadius: 6,
+              callbacks: {
+                label: ctx => ' $' + Number(ctx.raw).toLocaleString()
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 11 },
+                callback: v => '$' + Number(v).toLocaleString()
+              },
+              grid: { color: '#f1f5f9', drawBorder: false }
+            },
+            x: {
+              ticks: { color: '#94a3b8', font: { size: 11 } },
+              grid: { display: false, drawBorder: false }
             }
           }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: v => '$' + Number(v).toLocaleString()
-            },
-            grid: { color: '#f0f2f5' }
-          },
-          x: { grid: { display: false } }
         }
-      }
-    });
+      });
+    }
+
+    /* ── Pipeline chart ────────────────────────────────────── */
+    const pipelineCtx = document.getElementById('pipelineChart');
+    if (pipelineCtx) {
+      const pipeline = {{ order_pipeline|safe }};
+
+      const STATUS_CONFIG = {
+        confirmed:   { label: 'Confirmed',   color: 'rgba(59, 91, 219, 0.85)'  },
+        in_progress: { label: 'In Progress', color: 'rgba(245, 158, 11, 0.85)' },
+        done:        { label: 'Delivered',   color: 'rgba(16, 185, 129, 0.85)' },
+        cancelled:   { label: 'Cancelled',   color: 'rgba(239, 68, 68, 0.75)'  },
+      };
+
+      const labels   = pipeline.map(r => (STATUS_CONFIG[r.status] || { label: r.status }).label);
+      const counts   = pipeline.map(r => r.count);
+      const colors   = pipeline.map(r => (STATUS_CONFIG[r.status] || { color: '#cbd5e1' }).color);
+      const revenues = pipeline.map(r => parseFloat(r.total_revenue || 0));
+
+      new Chart(pipelineCtx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Orders',
+            data: counts,
+            backgroundColor: colors,
+            borderRadius: 5,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleColor: '#94a3b8',
+              bodyColor: '#f1f5f9',
+              padding: 10,
+              cornerRadius: 6,
+              callbacks: {
+                label: (ctx) => {
+                  const rev = revenues[ctx.dataIndex];
+                  return [
+                    ' ' + ctx.raw + ' order' + (ctx.raw !== 1 ? 's' : ''),
+                    ' $' + rev.toLocaleString() + ' value',
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 11 },
+                stepSize: 1,
+                callback: v => Number.isInteger(v) ? v : null,
+              },
+              grid: { color: '#f1f5f9', drawBorder: false }
+            },
+            y: {
+              ticks: { color: '#64748b', font: { size: 12, weight: '500' } },
+              grid: { display: false, drawBorder: false }
+            }
+          }
+        }
+      });
+    }
+
   });
 </script>
 {% endblock %}
