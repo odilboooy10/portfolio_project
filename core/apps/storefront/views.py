@@ -202,6 +202,12 @@ class ProductDetailView(CustomerRequiredMixin, View):
         like_count = product.likes.count()
         user_liked = product.likes.filter(user=request.user).exists()
 
+        can_review = SaleOrder.objects.filter(
+            customer__email=request.user.email,
+            status=SaleOrder.Status.DONE,
+            lines__variant__product=product,
+        ).exists()
+
         ctx = {
             'product': product,
             'variants_data': variants_data,
@@ -212,6 +218,7 @@ class ProductDetailView(CustomerRequiredMixin, View):
             'user_review': user_review,
             'like_count': like_count,
             'user_liked': user_liked,
+            'can_review': can_review,
         }
         return render(request, self.template_name, ctx)
 
@@ -466,6 +473,17 @@ class LikeToggleView(CustomerRequiredMixin, View):
 class ReviewCreateView(CustomerRequiredMixin, View):
     def post(self, request, pk):
         product = get_object_or_404(Product, pk=pk, is_active=True)
+
+        can_review = SaleOrder.objects.filter(
+            customer__email=request.user.email,
+            status=SaleOrder.Status.DONE,
+            lines__variant__product=product,
+        ).exists()
+
+        if not can_review:
+            messages.error(request, 'You can only review a product after it has been delivered.')
+            return redirect('store:product-detail', pk=pk)
+
         rating_raw = request.POST.get('rating', '').strip()
         body = request.POST.get('body', '').strip()
 
