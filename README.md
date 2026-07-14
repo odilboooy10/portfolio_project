@@ -2,10 +2,21 @@
 
 A full-featured, Odoo-inspired ERP suite built with Django and Django REST Framework — plus a customer-facing storefront that runs off the same backend. Built as a portfolio project to demonstrate production-grade backend and fullstack engineering.
 
-<!--
-Add screenshots here once captured, e.g.:
-![Dashboard](docs/screenshots/dashboard.png)
-![Storefront](docs/screenshots/storefront.png)
+> **Screenshots:** capture guide + filenames in [`docs/screenshots/`](docs/screenshots/).
+> Once the images are added there, uncomment the block below to display them.
+
+<!-- SCREENSHOTS — uncomment once the PNGs exist in docs/screenshots/
+### ERP dashboard
+![ERP dashboard](docs/screenshots/dashboard.png)
+
+### CoreShop storefront
+![Storefront catalog](docs/screenshots/storefront-catalog.png)
+
+### CRM pipeline
+![CRM kanban](docs/screenshots/crm-kanban.png)
+
+### Checkout
+![Checkout](docs/screenshots/storefront-checkout.png)
 -->
 
 ---
