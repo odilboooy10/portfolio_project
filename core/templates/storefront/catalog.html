@@ -62,6 +62,26 @@
         <p class="fw-bold text-dark mb-0 mt-auto">
           ${{ item.product.base_price }}
         </p>
+
+        <div class="d-flex align-items-center justify-content-between mt-2">
+          <div>
+            {% if item.avg_rating %}
+            {% for i in "12345" %}
+            {% if forloop.counter <= item.avg_rating_rounded %}
+            <i class="bi bi-star-fill text-warning" style="font-size: 0.75rem;"></i>
+            {% else %}
+            <i class="bi bi-star text-secondary" style="font-size: 0.75rem;"></i>
+            {% endif %}
+            {% endfor %}
+            <small class="text-muted ms-1">{{ item.avg_rating }}</small>
+            {% else %}
+            <small class="text-muted">No reviews</small>
+            {% endif %}
+          </div>
+          <small class="text-muted">
+            <i class="bi bi-heart-fill text-danger"></i> {{ item.like_count }}
+          </small>
+        </div>
       </div>
 
       <div class="card-footer bg-transparent border-top-0 pb-3">

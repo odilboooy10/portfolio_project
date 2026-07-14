@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import Avg, Count, F, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -15,7 +15,7 @@ from apps.inventory.models import Product, ProductVariant, StockLevel, StockMove
 from apps.sales.models import Customer, Invoice, InvoiceLine, SaleOrder, SaleOrderLine
 from apps.users.models import User
 
-from .models import Cart, CartItem
+from .models import Cart, CartItem, ProductLike, ProductReview
 
 
 class CustomerRequiredMixin(LoginRequiredMixin):
@@ -143,6 +143,9 @@ class CatalogView(CustomerRequiredMixin, View):
     def get(self, request):
         qs = Product.objects.filter(is_active=True).prefetch_related(
             'variants', 'category'
+        ).annotate(
+            like_count=Count('likes', distinct=True),
+            avg_rating=Avg('reviews__rating'),
         ).order_by('name')
 
         q = request.GET.get('q', '').strip()
@@ -162,11 +165,14 @@ class CatalogView(CustomerRequiredMixin, View):
             ).aggregate(total=Sum('quantity'))['total'] or 0
 
             first_variant = product.variants.filter(is_active=True).first()
-
+            avg = product.avg_rating
             products_data.append({
                 'product': product,
                 'total_stock': total_stock,
                 'first_variant': first_variant,
+                'like_count': product.like_count,
+                'avg_rating': round(avg, 1) if avg else None,
+                'avg_rating_rounded': round(avg) if avg else 0,
             })
 
         ctx = {
@@ -190,7 +196,23 @@ class ProductDetailView(CustomerRequiredMixin, View):
             stock = StockLevel.objects.filter(variant=v).aggregate(total=Sum('quantity'))['total'] or 0
             variants_data.append({'variant': v, 'stock': stock})
 
-        ctx = {'product': product, 'variants_data': variants_data}
+        reviews = product.reviews.select_related('user').all()
+        avg = reviews.aggregate(avg=Avg('rating'))['avg']
+        user_review = product.reviews.filter(user=request.user).first()
+        like_count = product.likes.count()
+        user_liked = product.likes.filter(user=request.user).exists()
+
+        ctx = {
+            'product': product,
+            'variants_data': variants_data,
+            'reviews': reviews,
+            'avg_rating': round(avg, 1) if avg else None,
+            'avg_rating_rounded': round(avg) if avg else 0,
+            'review_count': reviews.count(),
+            'user_review': user_review,
+            'like_count': like_count,
+            'user_liked': user_liked,
+        }
         return render(request, self.template_name, ctx)
 
 
@@ -428,3 +450,41 @@ class OrderDetailView(CustomerRequiredMixin, View):
         total = sum(line.line_total for line in order.lines.all())
         ctx = {'order': order, 'invoice': invoice, 'total': total}
         return render(request, self.template_name, ctx)
+
+
+# ── Likes & Reviews ───────────────────────────────────────────────────────────
+
+class LikeToggleView(CustomerRequiredMixin, View):
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk, is_active=True)
+        like, created = ProductLike.objects.get_or_create(user=request.user, product=product)
+        if not created:
+            like.delete()
+        return redirect('store:product-detail', pk=pk)
+
+
+class ReviewCreateView(CustomerRequiredMixin, View):
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk, is_active=True)
+        rating_raw = request.POST.get('rating', '').strip()
+        body = request.POST.get('body', '').strip()
+
+        try:
+            rating = int(rating_raw)
+            if not 1 <= rating <= 5:
+                raise ValueError
+        except (ValueError, TypeError):
+            messages.error(request, 'Please select a rating between 1 and 5.')
+            return redirect('store:product-detail', pk=pk)
+
+        if not body:
+            messages.error(request, 'Review text is required.')
+            return redirect('store:product-detail', pk=pk)
+
+        _, created = ProductReview.objects.update_or_create(
+            user=request.user,
+            product=product,
+            defaults={'rating': rating, 'body': body},
+        )
+        messages.success(request, 'Review submitted.' if created else 'Review updated.')
+        return redirect('store:product-detail', pk=pk)

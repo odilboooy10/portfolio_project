@@ -9,8 +9,10 @@ urlpatterns = [
     path('logout/',   views.StoreLogoutView.as_view(),    name='logout'),
     path('pending/',  views.PendingApprovalView.as_view(), name='pending'),
 
-    path('catalog/',                          views.CatalogView.as_view(),      name='catalog'),
-    path('catalog/<uuid:pk>/',                views.ProductDetailView.as_view(), name='product-detail'),
+    path('catalog/',                          views.CatalogView.as_view(),        name='catalog'),
+    path('catalog/<uuid:pk>/',                views.ProductDetailView.as_view(),  name='product-detail'),
+    path('catalog/<uuid:pk>/like/',           views.LikeToggleView.as_view(),     name='product-like'),
+    path('catalog/<uuid:pk>/review/',         views.ReviewCreateView.as_view(),   name='product-review'),
 
     path('cart/',            views.CartView.as_view(),       name='cart'),
     path('cart/add/',        views.AddToCartView.as_view(),  name='add-to-cart'),

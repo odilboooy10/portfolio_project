@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
-from apps.inventory.models import ProductVariant
+from apps.inventory.models import Product, ProductVariant
 
 
 class Cart(models.Model):
@@ -41,3 +41,33 @@ class CartItem(models.Model):
     @property
     def line_total(self):
         return self.variant.effective_price * self.quantity
+
+
+class ProductLike(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='product_likes')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+
+    def __str__(self):
+        return f"{self.user.email} likes {self.product.name}"
+
+
+class ProductReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='product_reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.PositiveSmallIntegerField()
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.email} — {self.product.name} ({self.rating}★)"
