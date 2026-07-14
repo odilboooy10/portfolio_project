@@ -15,7 +15,7 @@ class LoginView(View):
     template_name = 'auth/login.html'
 
     def get(self, request):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and request.user.role == 'admin':
             return redirect('dashboard:index')
         return render(request, self.template_name, {'form': AuthenticationForm()})
 
