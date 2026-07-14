@@ -2,9 +2,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
 
-from views import LoginView, LogoutView
+from views import LoginView, LogoutView, RootView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,7 +13,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
 
     # Frontend pages
-    path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
+    path('', RootView.as_view()),
     path('dashboard/', include('apps.dashboard.urls_frontend', namespace='dashboard')),
     path('sales/',     include('apps.sales.urls_frontend',     namespace='sales')),
     path('crm/',       include('apps.crm.urls_frontend',       namespace='crm')),

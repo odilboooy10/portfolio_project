@@ -4,6 +4,13 @@ from django.shortcuts import render, redirect
 from django.views import View
 
 
+class RootView(View):
+    def get(self, request):
+        if request.META.get('SERVER_PORT') == '8001':
+            return redirect('/store/login/')
+        return redirect('/dashboard/')
+
+
 class LoginView(View):
     template_name = 'auth/login.html'
 
