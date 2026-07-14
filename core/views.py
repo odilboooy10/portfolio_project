@@ -28,6 +28,11 @@ class LoginView(View):
                     'form': form,
                     'error': 'Customer accounts use the store login at /store/login/'
                 })
+            if user.role != 'admin':
+                return render(request, self.template_name, {
+                    'form': form,
+                    'error': 'Access denied. This panel is for administrators only.'
+                })
             login(request, user)
             return redirect(request.POST.get('next') or 'dashboard:index')
         return render(request, self.template_name, {'form': form})
