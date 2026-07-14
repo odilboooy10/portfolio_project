@@ -13,6 +13,16 @@ if _env_file.exists():
 SECRET_KEY = env('SECRET_KEY')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
+# HTTPS origins allowed to submit forms (required by Django 4 for cross-scheme POST).
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+
+# Portal routing (see config.middleware.PortRoutingMiddleware).
+# In production, set these to the two subdomains that front the same service,
+# e.g. ERP_HOST=admin.example.com  STORE_HOST=shop.example.com.
+# When unset (local dev), routing falls back to ports 8000 / 8001.
+ERP_HOST = env('ERP_HOST', default='')
+STORE_HOST = env('STORE_HOST', default='')
+
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -84,16 +94,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('POSTGRES_DB'),
-        'USER': env('POSTGRES_USER'),
-        'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': env('POSTGRES_HOST', default='localhost'),
-        'PORT': env('POSTGRES_PORT', default='5432'),
+# Prefer a single DATABASE_URL (Railway/Render/Heroku provide this);
+# fall back to discrete POSTGRES_* vars (local + docker-compose).
+if env('DATABASE_URL', default=''):
+    DATABASES = {'default': env.db('DATABASE_URL')}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('POSTGRES_DB'),
+            'USER': env('POSTGRES_USER'),
+            'PASSWORD': env('POSTGRES_PASSWORD'),
+            'HOST': env('POSTGRES_HOST', default='localhost'),
+            'PORT': env('POSTGRES_PORT', default='5432'),
+        }
     }
-}
 
 AUTH_USER_MODEL = 'users.User'
 

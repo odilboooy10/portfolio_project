@@ -23,7 +23,7 @@ The two are isolated by a routing middleware and per-port session cookies, so an
 
 ## Highlights
 
-- **36 models** across 10 Django apps, **66 tests**, **0 failures**
+- **36 models** across 10 Django apps, **65 tests**, **0 failures**
 - **REST API** with JWT auth and a live OpenAPI 3 schema (Swagger + Redoc)
 - **Dual-portal architecture** — internal ERP and public storefront from one codebase, cleanly separated
 - **Dockerized** — Postgres + Redis + Gunicorn + Celery + Nginx via `docker-compose`
@@ -136,12 +136,58 @@ celery -A config worker -l info
 
 ## Testing
 
+Tests run under **pytest** (config in `core/pytest.ini`):
+
 ```bash
 cd core
-python manage.py test
+pytest
 ```
 
-66 tests, currently all passing.
+65 tests, currently all passing.
+
+---
+
+## Deployment
+
+The two portals share one backend. Locally they're split by **port** (8000 / 8001);
+in production they split by **hostname** — two subdomains pointing at the same service.
+Because they're different subdomains, each gets its own host-only session cookie, so
+the ERP and store sessions stay isolated with no extra configuration.
+
+### One service, two subdomains (recommended)
+
+1. Provision **PostgreSQL** and **Redis** (managed add-ons on Railway / Render / Fly).
+2. Deploy the repo as a single web service. The `Procfile` handles it:
+   - `release` runs migrations + `collectstatic`
+   - `web` serves via Gunicorn; static files are served by **WhiteNoise** (no Nginx needed)
+   - `worker` runs Celery (optional)
+3. Point two subdomains at the service, e.g. `admin.yourdomain.com` and `shop.yourdomain.com`.
+4. Set environment variables (see `.env.example`):
+
+   ```
+   SECRET_KEY=<a long random value>
+   DEBUG=False
+   ALLOWED_HOSTS=admin.yourdomain.com,shop.yourdomain.com
+   ERP_HOST=admin.yourdomain.com
+   STORE_HOST=shop.yourdomain.com
+   CSRF_TRUSTED_ORIGINS=https://admin.yourdomain.com,https://shop.yourdomain.com
+   DATABASE_URL=<from your Postgres add-on>
+   CELERY_BROKER_URL=<your Redis URL>
+   CELERY_RESULT_BACKEND=<your Redis URL>
+   DJANGO_SETTINGS_MODULE=config.settings.production
+   ```
+
+   `admin.…` serves the ERP; `shop.…` serves the storefront. Any other host is left untouched.
+
+> **Note:** the hostname split needs two (sub)domains resolving to the service — a custom
+> domain you own, or a second custom domain added in the host's dashboard. A single default
+> `*.onrender.com` / `*.up.railway.app` domain only gives you one host, so both portals would
+> land on the same subdomain.
+
+### Docker (self-hosted)
+
+`docker compose up --build` brings up Postgres, Redis, Gunicorn, Celery, and Nginx together.
+Set `ERP_HOST` / `STORE_HOST` in `.env` and route both subdomains to the Nginx service.
 
 ---
 

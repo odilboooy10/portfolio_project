@@ -3,10 +3,12 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
 from django.views import View
 
+from config.middleware import portal_for
+
 
 class RootView(View):
     def get(self, request):
-        if request.META.get('SERVER_PORT') == '8001':
+        if portal_for(request) == 'store':
             return redirect('/store/login/')
         return redirect('/dashboard/')
 
