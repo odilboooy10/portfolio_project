@@ -105,6 +105,10 @@ cd core
 python manage.py migrate
 python manage.py createsuperuser
 
+# Optional: populate realistic demo data (products, orders, invoices,
+# leads, POs, plus demo logins) so the dashboard and storefront aren't empty.
+python manage.py seed_demo            # add --clear to wipe and reseed
+
 # 3. Run BOTH portals (separate terminals) — note the separate settings
 #    modules; each isolates its own session cookie.
 
