@@ -4,112 +4,524 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Shop{% endblock %}</title>
+  <title>{% block title %}CoreShop{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f8f9fa; }
-    .navbar-brand { font-weight: 700; font-size: 1.3rem; }
-    .cart-badge { position: relative; }
-    .cart-badge .badge { position: absolute; top: -6px; right: -10px; font-size: .65rem; }
-    .product-card { transition: box-shadow .2s; }
-    .product-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
-    .stock-badge-out { background: #dc3545; color: #fff; }
-    .stock-badge-low { background: #ffc107; color: #000; }
-    .stock-badge-in  { background: #198754; color: #fff; }
+    /* ── Design tokens ─────────────────────────────────────────────────── */
+    :root {
+      --c-primary:       #0f172a;
+      --c-accent:        #f97316;
+      --c-accent-hover:  #ea6c0a;
+      --c-accent-light:  #fff7ed;
+      --c-success:       #10b981;
+      --c-danger:        #ef4444;
+      --c-warning:       #f59e0b;
+      --c-bg:            #f8f9fb;
+      --c-surface:       #ffffff;
+      --c-border:        #e5e7eb;
+      --c-text:          #111827;
+      --c-muted:         #6b7280;
+      --c-muted-light:   #9ca3af;
+      --radius-sm:       6px;
+      --radius-md:       12px;
+      --radius-lg:       20px;
+      --shadow-sm:       0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md:       0 4px 20px rgba(0,0,0,.08);
+      --shadow-lg:       0 12px 40px rgba(0,0,0,.12);
+      --transition:      0.2s cubic-bezier(.4,0,.2,1);
+      --font-display:    'Plus Jakarta Sans', sans-serif;
+      --font-body:       'Inter', sans-serif;
+    }
+
+    /* ── Base ──────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--c-bg);
+      color: var(--c-text);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+
+    /* ── Navbar ────────────────────────────────────────────────────────── */
+    .store-nav {
+      background: var(--c-surface);
+      border-bottom: 1px solid var(--c-border);
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      box-shadow: 0 1px 0 var(--c-border);
+    }
+    .store-nav .container {
+      display: flex;
+      align-items: center;
+      height: 64px;
+      gap: 2rem;
+    }
+    .store-brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--c-primary) !important;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .store-brand .brand-mark {
+      width: 28px;
+      height: 28px;
+      background: var(--c-accent);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-links a {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--c-muted);
+      text-decoration: none;
+      transition: color var(--transition), background var(--transition);
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--c-text);
+      background: var(--c-bg);
+    }
+    .nav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .cart-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      color: var(--c-text);
+      text-decoration: none;
+      transition: background var(--transition);
+      font-size: 1.1rem;
+    }
+    .cart-btn:hover { background: var(--c-bg); color: var(--c-text); }
+    .cart-btn .cart-count {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 16px;
+      height: 16px;
+      background: var(--c-accent);
+      border-radius: 50%;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-nav-signin {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--c-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      transition: color var(--transition), background var(--transition);
+    }
+    .btn-nav-signin:hover { color: var(--c-text); background: var(--c-bg); }
+    .btn-nav-register {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--c-accent);
+      border: none;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .btn-nav-register:hover {
+      background: var(--c-accent-hover);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    /* User dropdown */
+    .user-menu {
+      position: relative;
+    }
+    .user-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--c-text);
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    .user-menu-btn:hover { border-color: var(--c-muted-light); }
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--c-primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .dropdown-menu-clean {
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: 6px;
+      min-width: 180px;
+    }
+    .dropdown-menu-clean .dropdown-item {
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      padding: 8px 12px;
+      color: var(--c-text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dropdown-menu-clean .dropdown-item:hover { background: var(--c-bg); }
+    .dropdown-menu-clean .dropdown-item.danger { color: var(--c-danger); }
+    .dropdown-menu-clean .dropdown-item.danger:hover { background: #fef2f2; }
+    .dropdown-divider { margin: 4px 0; border-color: var(--c-border); }
+
+    /* ── Buttons ───────────────────────────────────────────────────────── */
+    .btn-primary {
+      background: var(--c-accent);
+      border-color: var(--c-accent);
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background: var(--c-accent-hover);
+      border-color: var(--c-accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(249,115,22,.3);
+    }
+    .btn-outline-primary {
+      color: var(--c-accent);
+      border-color: var(--c-accent);
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition);
+    }
+    .btn-outline-primary:hover {
+      background: var(--c-accent);
+      border-color: var(--c-accent);
+      transform: translateY(-1px);
+    }
+    .btn-outline-secondary {
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+      transition: all var(--transition);
+    }
+
+    /* ── Product cards ─────────────────────────────────────────────────── */
+    .product-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: box-shadow var(--transition), transform var(--transition);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .product-card .card-img-wrap {
+      position: relative;
+      overflow: hidden;
+      background: #f3f4f6;
+      height: 220px;
+    }
+    .product-card .card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+    }
+    .product-card:hover .card-img-wrap img { transform: scale(1.04); }
+    .product-card .card-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: var(--c-muted-light);
+    }
+    .product-card .card-body-inner {
+      padding: 1rem 1rem 0.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card .card-footer-inner {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--c-border);
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* ── Stock badges ──────────────────────────────────────────────────── */
+    .badge-stock {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .badge-in    { background: #d1fae5; color: #065f46; }
+    .badge-low   { background: #fef3c7; color: #92400e; }
+    .badge-out   { background: #fee2e2; color: #991b1b; }
+
+    /* ── Stars ─────────────────────────────────────────────────────────── */
+    .stars { display: inline-flex; gap: 1px; color: var(--c-warning); font-size: 0.75rem; }
+    .stars .empty { color: #d1d5db; }
+
+    /* ── Form controls ─────────────────────────────────────────────────── */
+    .form-control, .form-select {
+      border-color: var(--c-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--c-accent);
+      box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+    }
+    .input-group-text {
+      background: var(--c-bg);
+      border-color: var(--c-border);
+    }
+
+    /* ── Alerts ────────────────────────────────────────────────────────── */
+    .alert {
+      border-radius: var(--radius-md);
+      border: none;
+      font-size: 0.9rem;
+    }
+    .alert-success { background: #d1fae5; color: #065f46; }
+    .alert-danger  { background: #fee2e2; color: #991b1b; }
+    .alert-warning { background: #fef3c7; color: #92400e; }
+    .alert-info    { background: #dbeafe; color: #1e40af; }
+
+    /* ── Footer ────────────────────────────────────────────────────────── */
+    .store-footer {
+      background: var(--c-primary);
+      color: rgba(255,255,255,.6);
+      padding: 3rem 0 1.5rem;
+      margin-top: 5rem;
+    }
+    .store-footer .footer-brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .store-footer .footer-tagline {
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+    .store-footer .footer-links a {
+      color: rgba(255,255,255,.5);
+      text-decoration: none;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 8px;
+      transition: color var(--transition);
+    }
+    .store-footer .footer-links a:hover { color: rgba(255,255,255,.9); }
+    .store-footer .footer-title {
+      font-weight: 600;
+      color: rgba(255,255,255,.8);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .store-footer .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.1);
+      margin-top: 2.5rem;
+      padding-top: 1.25rem;
+      font-size: 0.8rem;
+    }
+
+    /* ── Misc ──────────────────────────────────────────────────────────── */
+    .page-content { padding-top: 2.5rem; padding-bottom: 2rem; }
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+    .breadcrumb { font-size: 0.85rem; }
+    .breadcrumb-item + .breadcrumb-item::before { color: var(--c-muted-light); }
+
+    @media (max-width: 768px) {
+      .store-nav .container { flex-wrap: wrap; height: auto; padding: 12px 16px; }
+      .nav-links { display: none; }
+    }
     @media print {
-      .no-print { display: none !important; }
-      .card { border: none !important; }
+      .store-nav, .store-footer, .no-print { display: none !important; }
     }
   </style>
-  {% block extra_head %}{% endblock extra_head %}
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark no-print">
+<!-- ── Navbar ──────────────────────────────────────────────────────────── -->
+<nav class="store-nav no-print">
   <div class="container">
-    <a class="navbar-brand" href="{% url 'store:catalog' %}">
-      <i class="bi bi-shop"></i> ERP Shop
+    <a class="store-brand" href="{% url 'store:catalog' %}">
+      <span class="brand-mark"><i class="bi bi-bag-heart-fill"></i></span>
+      CoreShop
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#storeNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="storeNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'store:catalog' %}">
-            <i class="bi bi-grid"></i> Catalog
-          </a>
-        </li>
-        {% if request.user.is_authenticated %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'store:order-list' %}">
-            <i class="bi bi-bag-check"></i> My Orders
-          </a>
-        </li>
+
+    <ul class="nav-links">
+      <li><a href="{% url 'store:catalog' %}"><i class="bi bi-grid-3x3-gap"></i> Shop</a></li>
+      {% if request.user.is_authenticated %}
+      <li><a href="{% url 'store:order-list' %}"><i class="bi bi-bag-check"></i> My Orders</a></li>
+      {% endif %}
+    </ul>
+
+    <div class="nav-right">
+      {% if request.user.is_authenticated %}
+      <a class="cart-btn" href="{% url 'store:cart' %}">
+        <i class="bi bi-bag"></i>
+        {% if cart_item_count %}
+        <span class="cart-count">{{ cart_item_count }}</span>
         {% endif %}
-      </ul>
-      <ul class="navbar-nav ms-auto align-items-center">
-        {% if request.user.is_authenticated %}
-        <li class="nav-item me-2 cart-badge">
-          <a class="nav-link" href="{% url 'store:cart' %}">
-            <i class="bi bi-cart3 fs-5"></i>
-            {% if cart_item_count %}
-            <span class="badge bg-danger">{{ cart_item_count }}</span>
-            {% endif %}
-          </a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i> {{ request.user.first_name|default:request.user.email }}
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="{% url 'store:order-list' %}">My Orders</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <form method="post" action="{% url 'store:logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="dropdown-item text-danger">
-                  <i class="bi bi-box-arrow-right"></i> Sign Out
-                </button>
-              </form>
-            </li>
-          </ul>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'store:login' %}">Sign In</a>
-        </li>
-        <li class="nav-item">
-          <a class="btn btn-outline-light btn-sm ms-2" href="{% url 'store:signup' %}">Register</a>
-        </li>
-        {% endif %}
-      </ul>
+      </a>
+
+      <div class="user-menu dropdown">
+        <button class="user-menu-btn dropdown-toggle" data-bs-toggle="dropdown" type="button">
+          <span class="user-avatar">{{ request.user.first_name|first|upper|default:"U" }}</span>
+          {{ request.user.first_name|default:request.user.email|truncatechars:14 }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-clean">
+          <li>
+            <a class="dropdown-item" href="{% url 'store:order-list' %}">
+              <i class="bi bi-bag-check"></i> My Orders
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{% url 'store:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item danger w-100 text-start border-0 bg-transparent p-0">
+                <i class="bi bi-box-arrow-right"></i> Sign Out
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
+
+      {% else %}
+      <a class="btn-nav-signin" href="{% url 'store:login' %}">Sign In</a>
+      <a class="btn-nav-register" href="{% url 'store:signup' %}">Get Started</a>
+      {% endif %}
     </div>
   </div>
 </nav>
 
-<div class="container my-4">
+<!-- ── Flash messages ──────────────────────────────────────────────────── -->
+{% if messages %}
+<div class="container mt-3">
   {% for message in messages %}
-  <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+  <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-2" role="alert">
     {{ message }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
   {% endfor %}
-
-  {% block content %}{% endblock content %}
 </div>
+{% endif %}
 
-<footer class="bg-dark text-secondary py-3 mt-5 no-print">
-  <div class="container text-center small">
-    &copy; {% now "Y" %} ERP Shop. All rights reserved.
+{% block content %}{% endblock %}
+
+<!-- ── Footer ──────────────────────────────────────────────────────────── -->
+<footer class="store-footer no-print">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="footer-brand">
+          <i class="bi bi-bag-heart-fill me-2" style="color: var(--c-accent);"></i>CoreShop
+        </div>
+        <p class="footer-tagline mt-2">A modern ERP-powered storefront.<br>Built for quality, speed, and simplicity.</p>
+      </div>
+      <div class="col-lg-2 col-6">
+        <div class="footer-title">Shop</div>
+        <div class="footer-links">
+          <a href="{% url 'store:catalog' %}">All Products</a>
+          <a href="{% url 'store:cart' %}">My Cart</a>
+          {% if request.user.is_authenticated %}
+          <a href="{% url 'store:order-list' %}">My Orders</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-lg-2 col-6">
+        <div class="footer-title">Account</div>
+        <div class="footer-links">
+          {% if request.user.is_authenticated %}
+          <a href="{% url 'store:order-list' %}">Order History</a>
+          {% else %}
+          <a href="{% url 'store:login' %}">Sign In</a>
+          <a href="{% url 'store:signup' %}">Register</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span>&copy; {% now "Y" %} CoreShop. All rights reserved.</span>
+      <span>Powered by ERP Core</span>
+    </div>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-{% block extra_js %}{% endblock extra_js %}
+{% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,122 +1,184 @@
 {% extends "storefront/base.html" %}
-{% block title %}Catalog — ERP Shop{% endblock title %}
+{% block title %}Shop — CoreShop{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="fw-bold mb-0"><i class="bi bi-grid"></i> Product Catalog</h4>
+
+<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+<div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f2744 100%); padding: 4rem 0 3rem;">
+  <div class="container text-center">
+    <p style="color: rgba(249,115,22,.9); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem;">
+      Free shipping on all orders
+    </p>
+    <h1 style="font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3.25rem); color: #fff; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1rem;">
+      Everything you need,<br><span style="color: var(--c-accent);">delivered to you.</span>
+    </h1>
+    <p style="color: rgba(255,255,255,.55); font-size: 1rem; max-width: 440px; margin: 0 auto 2rem;">
+      Browse our curated product catalog and get exactly what you're looking for.
+    </p>
+
+    <!-- Search bar in hero -->
+    <form method="get" style="max-width: 520px; margin: 0 auto;" class="d-flex gap-2">
+      <div class="input-group" style="flex: 1;">
+        <span class="input-group-text" style="background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.5);">
+          <i class="bi bi-search"></i>
+        </span>
+        <input type="text" name="q" value="{{ q }}"
+               style="background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); color: #fff;"
+               class="form-control"
+               placeholder="Search products…">
+        {% if current_category %}
+        <input type="hidden" name="category" value="{{ current_category }}">
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-primary px-4" style="white-space: nowrap;">Search</button>
+    </form>
+  </div>
 </div>
 
-<form method="get" class="row g-2 mb-4">
-  <div class="col-md-5">
-    <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-search"></i></span>
-      <input type="text" name="q" class="form-control" placeholder="Search products…" value="{{ q }}">
-    </div>
+<!-- ── Filter bar ─────────────────────────────────────────────────────────── -->
+<div style="background: var(--c-surface); border-bottom: 1px solid var(--c-border); padding: 0.875rem 0;">
+  <div class="container d-flex align-items-center gap-3 flex-wrap">
+    <span style="font-size: 0.8rem; color: var(--c-muted); font-weight: 500;">Filter:</span>
+    <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      <select name="category" class="form-select form-select-sm" style="width: auto; min-width: 160px;" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.pk }}" {% if current_category == cat.pk|stringformat:"s" %}selected{% endif %}>
+          {{ cat }}
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+    {% if q or current_category %}
+    <a href="{% url 'store:catalog' %}" style="font-size: 0.8rem; color: var(--c-accent); text-decoration: none; display: flex; align-items: center; gap: 4px; font-weight: 500;">
+      <i class="bi bi-x-circle"></i> Clear filters
+    </a>
+    {% endif %}
+    <span style="margin-left: auto; font-size: 0.8rem; color: var(--c-muted);">
+      {{ products_data|length }} product{{ products_data|length|pluralize }}
+    </span>
   </div>
-  <div class="col-md-4">
-    <select name="category" class="form-select">
-      <option value="">All Categories</option>
-      {% for cat in categories %}
-      <option value="{{ cat.pk }}" {% if current_category == cat.pk|stringformat:"s" %}selected{% endif %}>
-        {{ cat }}
-      </option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-auto">
-    <button type="submit" class="btn btn-primary">Filter</button>
-    <a href="{% url 'store:catalog' %}" class="btn btn-outline-secondary">Clear</a>
-  </div>
-</form>
+</div>
 
-{% if products_data %}
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-  {% for item in products_data %}
-  <div class="col">
-    <div class="card h-100 product-card">
-      {% if item.product.image %}
-      <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}"
-           style="height: 180px; object-fit: cover;">
-      {% else %}
-      <div class="d-flex align-items-center justify-content-center bg-light" style="height: 180px;">
-        <i class="bi bi-box-seam text-secondary" style="font-size: 3rem;"></i>
-      </div>
-      {% endif %}
+<!-- ── Product grid ───────────────────────────────────────────────────────── -->
+<div class="container page-content">
+  {% if products_data %}
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
+    {% for item in products_data %}
+    <div class="col">
+      <div class="product-card">
 
-      <div class="card-body d-flex flex-column">
-        <h6 class="card-title fw-semibold">{{ item.product.name }}</h6>
-        {% if item.product.category %}
-        <small class="text-muted mb-1">{{ item.product.category }}</small>
-        {% endif %}
-
-        <div class="mb-2">
-          {% if item.total_stock <= 0 %}
-          <span class="badge stock-badge-out">Out of Stock</span>
-          {% elif item.total_stock < 5 %}
-          <span class="badge stock-badge-low">Low Stock ({{ item.total_stock|floatformat:0 }} left)</span>
+        <!-- Image -->
+        <a href="{% url 'store:product-detail' item.product.pk %}" class="card-img-wrap text-decoration-none d-block">
+          {% if item.product.image %}
+          <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
           {% else %}
-          <span class="badge stock-badge-in">In Stock</span>
+          <div class="card-img-placeholder">
+            <i class="bi bi-box-seam"></i>
+          </div>
           {% endif %}
-        </div>
-
-        <p class="fw-bold text-dark mb-0 mt-auto">
-          ${{ item.product.base_price }}
-        </p>
-
-        <div class="d-flex align-items-center justify-content-between mt-2">
-          <div>
-            {% if item.avg_rating %}
-            {% for i in "12345" %}
-            {% if forloop.counter <= item.avg_rating_rounded %}
-            <i class="bi bi-star-fill text-warning" style="font-size: 0.75rem;"></i>
-            {% else %}
-            <i class="bi bi-star text-secondary" style="font-size: 0.75rem;"></i>
-            {% endif %}
-            {% endfor %}
-            <small class="text-muted ms-1">{{ item.avg_rating }}</small>
-            {% else %}
-            <small class="text-muted">No reviews</small>
+          <!-- Stock overlay badge -->
+          <div style="position: absolute; top: 10px; left: 10px;">
+            {% if item.total_stock <= 0 %}
+            <span class="badge-stock badge-out">Out of stock</span>
+            {% elif item.total_stock < 5 %}
+            <span class="badge-stock badge-low">Only {{ item.total_stock|floatformat:0 }} left</span>
             {% endif %}
           </div>
-          <small class="text-muted">
-            <i class="bi bi-heart-fill text-danger"></i> {{ item.like_count }}
-          </small>
-        </div>
-      </div>
+          <!-- Like count -->
+          {% if item.like_count %}
+          <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,.45); backdrop-filter: blur(4px); border-radius: 20px; padding: 3px 8px; font-size: 0.7rem; color: #fff; display: flex; align-items: center; gap: 4px;">
+            <i class="bi bi-heart-fill" style="color: #fb7185;"></i> {{ item.like_count }}
+          </div>
+          {% endif %}
+        </a>
 
-      <div class="card-footer bg-transparent border-top-0 pb-3">
-        <a href="{% url 'store:product-detail' item.product.pk %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
-          View Details
-        </a>
-        {% if item.first_variant and item.total_stock > 0 %}
-        <form method="post" action="{% url 'store:add-to-cart' %}">
-          {% csrf_token %}
-          <input type="hidden" name="variant_id" value="{{ item.first_variant.pk }}">
-          <button type="submit" class="btn btn-primary btn-sm w-100">
-            <i class="bi bi-cart-plus"></i> Add to Cart
+        <!-- Body -->
+        <div class="card-body-inner">
+          {% if item.product.category %}
+          <p style="font-size: 0.7rem; font-weight: 600; color: var(--c-accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
+            {{ item.product.category }}
+          </p>
+          {% endif %}
+
+          <a href="{% url 'store:product-detail' item.product.pk %}"
+             style="font-weight: 600; font-size: 0.9rem; color: var(--c-text); text-decoration: none; line-height: 1.35; display: block; margin-bottom: 6px;">
+            {{ item.product.name }}
+          </a>
+
+          <!-- Stars -->
+          <div class="d-flex align-items-center gap-2 mb-auto">
+            {% if item.avg_rating %}
+            <span class="stars">
+              {% for i in "12345" %}
+              {% if forloop.counter <= item.avg_rating_rounded %}
+              <i class="bi bi-star-fill"></i>
+              {% else %}
+              <i class="bi bi-star empty"></i>
+              {% endif %}
+              {% endfor %}
+            </span>
+            <span style="font-size: 0.75rem; color: var(--c-muted);">{{ item.avg_rating }}</span>
+            {% else %}
+            <span style="font-size: 0.75rem; color: var(--c-muted-light);">No reviews yet</span>
+            {% endif %}
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between mt-2">
+            <span style="font-size: 1.05rem; font-weight: 700; color: var(--c-text);">${{ item.product.base_price }}</span>
+            {% if item.total_stock > 0 and item.total_stock >= 5 %}
+            <span class="badge-stock badge-in">In Stock</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Footer / CTA -->
+        <div class="card-footer-inner">
+          {% if item.first_variant and item.total_stock > 0 %}
+          <form method="post" action="{% url 'store:add-to-cart' %}" style="flex: 1;">
+            {% csrf_token %}
+            <input type="hidden" name="variant_id" value="{{ item.first_variant.pk }}">
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+              <i class="bi bi-bag-plus"></i> Add to Bag
+            </button>
+          </form>
+          {% elif item.total_stock <= 0 %}
+          <button class="btn btn-sm w-100" style="background: #f3f4f6; color: var(--c-muted); cursor: not-allowed;" disabled>
+            Out of Stock
           </button>
-        </form>
-        {% elif item.total_stock <= 0 %}
-        <button class="btn btn-secondary btn-sm w-100" disabled>Out of Stock</button>
-        {% else %}
-        <a href="{% url 'store:product-detail' item.product.pk %}" class="btn btn-primary btn-sm w-100">
-          <i class="bi bi-cart-plus"></i> Add to Cart
-        </a>
-        {% endif %}
+          {% else %}
+          <a href="{% url 'store:product-detail' item.product.pk %}" class="btn btn-primary btn-sm" style="flex:1;">
+            <i class="bi bi-bag-plus"></i> Add to Bag
+          </a>
+          {% endif %}
+          <a href="{% url 'store:product-detail' item.product.pk %}"
+             class="btn btn-outline-secondary btn-sm"
+             style="white-space: nowrap; flex-shrink: 0;"
+             title="View details">
+            <i class="bi bi-eye"></i>
+          </a>
+        </div>
+
       </div>
     </div>
+    {% endfor %}
   </div>
-  {% endfor %}
-</div>
-{% else %}
-<div class="text-center py-5">
-  <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
-  <h5 class="mt-3 text-muted">
-    {% if q %}No products match your search.{% else %}No products available yet.{% endif %}
-  </h5>
-  {% if q %}
-  <a href="{% url 'store:catalog' %}" class="btn btn-outline-primary mt-2">View All Products</a>
+
+  {% else %}
+  <!-- Empty state -->
+  <div class="text-center" style="padding: 6rem 0;">
+    <div style="width: 72px; height: 72px; background: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 2rem; color: var(--c-muted);">
+      <i class="bi bi-search"></i>
+    </div>
+    <h5 style="font-weight: 600; margin-bottom: 0.5rem;">No products found</h5>
+    <p style="color: var(--c-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+      {% if q %}No results for "<strong>{{ q }}</strong>".{% else %}No products are available yet.{% endif %}
+    </p>
+    {% if q %}
+    <a href="{% url 'store:catalog' %}" class="btn btn-primary">Browse All Products</a>
+    {% endif %}
+  </div>
   {% endif %}
 </div>
-{% endif %}
-{% endblock content %}
+{% endblock %}

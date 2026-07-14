@@ -1,94 +1,197 @@
 {% extends "storefront/base.html" %}
-{% block title %}Order {{ order.reference }} — ERP Shop{% endblock title %}
+{% block title %}Order {{ order.reference }} — CoreShop{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 no-print">
-  <div>
-    <a href="{% url 'store:order-list' %}" class="btn btn-outline-secondary btn-sm me-2">
-      <i class="bi bi-arrow-left"></i> My Orders
-    </a>
-    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
-      <i class="bi bi-printer"></i> Print Receipt
+<div class="container page-content" style="max-width: 860px;">
+
+  <!-- Header -->
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4 no-print">
+    <div>
+      <a href="{% url 'store:order-list' %}"
+         style="font-size: 0.8rem; color: var(--c-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+        <i class="bi bi-arrow-left"></i> Back to orders
+      </a>
+      <h1 style="font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em; margin: 0;">
+        {{ order.reference }}
+      </h1>
+      <p style="color: var(--c-muted); font-size: 0.85rem; margin: 4px 0 0;">
+        Placed on {{ order.confirmed_at|date:"d M Y" }} at {{ order.confirmed_at|time:"H:i" }}
+      </p>
+    </div>
+    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print"
+            style="display: flex; align-items: center; gap: 6px;">
+      <i class="bi bi-printer"></i> Print receipt
     </button>
   </div>
-</div>
 
-<div class="card shadow-sm">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div>
-      <h5 class="mb-0 fw-bold">Order {{ order.reference }}</h5>
-      <small class="text-muted">Placed on {{ order.confirmed_at|date:"d M Y, H:i" }}</small>
-    </div>
-    <div>
-      {% if order.status == 'confirmed' %}
-      <span class="badge bg-primary fs-6">Confirmed</span>
-      {% elif order.status == 'in_progress' %}
-      <span class="badge bg-info text-dark fs-6">In Progress</span>
-      {% elif order.status == 'done' %}
-      <span class="badge bg-success fs-6">Completed</span>
-      {% elif order.status == 'cancelled' %}
-      <span class="badge bg-danger fs-6">Cancelled</span>
-      {% else %}
-      <span class="badge bg-secondary fs-6">{{ order.status }}</span>
-      {% endif %}
-    </div>
-  </div>
+  <!-- Status timeline -->
+  <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: 1.5rem 2rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: flex-start; position: relative;">
 
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0 align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Product</th>
-          <th>SKU</th>
-          <th class="text-center">Qty</th>
-          <th class="text-end">Unit Price</th>
-          <th class="text-end">Line Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for line in order.lines.all %}
-        <tr>
-          <td class="fw-semibold">{{ line.variant.product.name }}</td>
-          <td><small class="text-muted">{{ line.variant.sku }}</small></td>
-          <td class="text-center">{{ line.quantity|floatformat:0 }}</td>
-          <td class="text-end">${{ line.unit_price }}</td>
-          <td class="text-end fw-semibold">${{ line.line_total|floatformat:2 }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-      <tfoot class="table-light">
-        <tr>
-          <td colspan="4" class="text-end fw-bold">Order Total</td>
-          <td class="text-end fw-bold fs-5">${{ total|floatformat:2 }}</td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+      <!-- Connecting line -->
+      <div style="position: absolute; top: 14px; left: calc(14px + (100% - 28px) / 6); right: calc(14px + (100% - 28px) / 6 * 2 + 14px); height: 2px; background: var(--c-border); z-index: 0;"></div>
 
-  {% if invoice %}
-  <div class="card-footer">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <span class="fw-semibold">Invoice:</span> {{ invoice.reference }}
+      {% with s=order.status %}
+
+      <!-- Step 1: Confirmed -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;
+             {% if s == 'confirmed' or s == 'in_progress' or s == 'done' %}
+             background: var(--c-accent); color: #fff;
+             {% else %}
+             background: var(--c-border); color: var(--c-muted);
+             {% endif %}">
+          <i class="bi bi-check{% if s == 'in_progress' or s == 'done' %}-lg{% endif %}"></i>
+        </div>
+        <span style="font-size: 0.7rem; font-weight: 600; margin-top: 8px; text-align: center;
+              {% if s == 'confirmed' or s == 'in_progress' or s == 'done' %}color: var(--c-text);{% else %}color: var(--c-muted-light);{% endif %}">
+          Confirmed
+        </span>
       </div>
-      <div>
-        {% if invoice.status == 'paid' %}
-        <span class="badge bg-success">
-          <i class="bi bi-check-circle"></i> Paid
-          {% if invoice.paid_at %}— {{ invoice.paid_at|date:"d M Y" }}{% endif %}
+
+      <!-- Connector -->
+      <div style="flex: 1; height: 2px; margin-top: 14px;
+           {% if s == 'in_progress' or s == 'done' %}background: var(--c-accent);{% else %}background: var(--c-border);{% endif %}">
+      </div>
+
+      <!-- Step 2: In Progress -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;
+             {% if s == 'in_progress' %}background: var(--c-warning); color: #fff;
+             {% elif s == 'done' %}background: var(--c-accent); color: #fff;
+             {% else %}background: var(--c-border); color: var(--c-muted);{% endif %}">
+          <i class="bi bi-{% if s == 'done' %}check{% else %}box-seam{% endif %}"></i>
+        </div>
+        <span style="font-size: 0.7rem; font-weight: 600; margin-top: 8px; text-align: center;
+              {% if s == 'in_progress' or s == 'done' %}color: var(--c-text);{% else %}color: var(--c-muted-light);{% endif %}">
+          Packing
         </span>
+      </div>
+
+      <!-- Connector -->
+      <div style="flex: 1; height: 2px; margin-top: 14px;
+           {% if s == 'done' %}background: var(--c-accent);{% else %}background: var(--c-border);{% endif %}">
+      </div>
+
+      <!-- Step 3: Delivered -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;
+             {% if s == 'done' %}background: var(--c-success); color: #fff;
+             {% else %}background: var(--c-border); color: var(--c-muted);{% endif %}">
+          <i class="bi bi-{% if s == 'done' %}check-circle{% else %}truck{% endif %}"></i>
+        </div>
+        <span style="font-size: 0.7rem; font-weight: 600; margin-top: 8px; text-align: center;
+              {% if s == 'done' %}color: var(--c-success);{% else %}color: var(--c-muted-light);{% endif %}">
+          Delivered
+        </span>
+      </div>
+
+      {% endwith %}
+    </div>
+
+    {% if order.status == 'cancelled' %}
+    <div style="margin-top: 1.25rem; padding: 10px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--c-danger); display: flex; align-items: center; gap: 8px;">
+      <i class="bi bi-x-circle"></i> This order has been cancelled.
+    </div>
+    {% elif order.status == 'done' %}
+    <div style="margin-top: 1.25rem; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--c-success); display: flex; align-items: center; gap: 8px;">
+      <i class="bi bi-check-circle"></i> Your order has been delivered. You can now leave a review for each product.
+    </div>
+    {% elif order.status == 'in_progress' %}
+    <div style="margin-top: 1.25rem; padding: 10px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-sm); font-size: 0.8rem; color: #92400e; display: flex; align-items: center; gap: 8px;">
+      <i class="bi bi-box-seam"></i> Your order is being packed and will be shipped soon.
+    </div>
+    {% else %}
+    <div style="margin-top: 1.25rem; padding: 10px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); font-size: 0.8rem; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+      <i class="bi bi-clock"></i> Your order has been confirmed and is awaiting processing.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Items -->
+  <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.5rem;">
+    <div style="padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--c-border);">
+      <span style="font-weight: 600; font-size: 0.875rem;">Items ordered</span>
+    </div>
+
+    {% for line in order.lines.all %}
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; {% if not forloop.last %}border-bottom: 1px solid var(--c-border);{% endif %}">
+      <div style="width: 56px; height: 56px; border-radius: var(--radius-sm); background: #f3f4f6; overflow: hidden; flex-shrink: 0;">
+        {% if line.variant.product.image %}
+        <img src="{{ line.variant.product.image.url }}" alt="{{ line.variant.product.name }}"
+             style="width: 100%; height: 100%; object-fit: cover;">
         {% else %}
-        <span class="badge bg-warning text-dark">
-          <i class="bi bi-clock"></i> Payment Pending
-        </span>
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--c-muted-light); font-size: 1.25rem;">
+          <i class="bi bi-box-seam"></i>
+        </div>
         {% endif %}
       </div>
+      <div style="flex: 1; min-width: 0;">
+        <a href="{% url 'store:product-detail' line.variant.product.pk %}"
+           style="font-weight: 600; font-size: 0.875rem; color: var(--c-text); text-decoration: none;">
+          {{ line.variant.product.name }}
+        </a>
+        <p style="font-size: 0.75rem; color: var(--c-muted); margin: 2px 0 0;">SKU: {{ line.variant.sku }}</p>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <p style="font-size: 0.78rem; color: var(--c-muted); margin: 0;">{{ line.quantity|floatformat:0 }} × ${{ line.unit_price }}</p>
+        <p style="font-weight: 700; font-size: 0.9rem; margin: 2px 0 0;">${{ line.line_total|floatformat:2 }}</p>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Totals -->
+    <div style="padding: 1rem 1.25rem; border-top: 2px solid var(--c-border); background: var(--c-bg);">
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.4rem;">
+        <span style="color: var(--c-muted);">Subtotal</span>
+        <span style="font-weight: 600;">${{ total|floatformat:2 }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.875rem;">
+        <span style="color: var(--c-muted);">Shipping</span>
+        <span style="color: var(--c-success); font-weight: 600;">Free</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid var(--c-border);">
+        <span style="font-weight: 700;">Order total</span>
+        <span style="font-weight: 800; font-size: 1.05rem;">${{ total|floatformat:2 }}</span>
+      </div>
     </div>
   </div>
-  {% endif %}
-</div>
 
-<div class="mt-4 text-center text-muted small no-print">
-  Thank you for your purchase. Questions? Contact our support team.
+  <!-- Invoice -->
+  {% if invoice %}
+  <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 36px; height: 36px; background: {% if invoice.status == 'paid' %}#d1fae5{% else %}#fef3c7{% endif %}; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: {% if invoice.status == 'paid' %}var(--c-success){% else %}var(--c-warning){% endif %};">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div>
+        <p style="font-weight: 600; font-size: 0.875rem; margin: 0;">Invoice {{ invoice.reference }}</p>
+        <p style="font-size: 0.75rem; color: var(--c-muted); margin: 0;">
+          {% if invoice.paid_at %}Paid on {{ invoice.paid_at|date:"d M Y" }}{% else %}Payment processing{% endif %}
+        </p>
+      </div>
+    </div>
+    {% if invoice.status == 'paid' %}
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: #d1fae5; color: #065f46; font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;">
+      <i class="bi bi-check-circle-fill"></i> Paid
+    </span>
+    {% else %}
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: #fef3c7; color: #92400e; font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;">
+      <i class="bi bi-clock"></i> Pending
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Footer actions -->
+  <div class="d-flex gap-3 justify-content-between align-items-center flex-wrap no-print">
+    <a href="{% url 'store:catalog' %}" class="btn btn-primary">
+      <i class="bi bi-bag me-2"></i>Continue shopping
+    </a>
+    <p style="font-size: 0.78rem; color: var(--c-muted); margin: 0;">
+      Questions about your order? Contact our support team.
+    </p>
+  </div>
+
 </div>
-{% endblock content %}
+{% endblock %}

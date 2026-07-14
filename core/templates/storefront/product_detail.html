@@ -1,213 +1,252 @@
 {% extends "storefront/base.html" %}
-{% block title %}{{ product.name }} — ERP Shop{% endblock title %}
+{% block title %}{{ product.name }} — CoreShop{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'store:catalog' %}">Catalog</a></li>
-    <li class="breadcrumb-item active">{{ product.name }}</li>
-  </ol>
-</nav>
+<div class="container page-content">
 
-{% if messages %}
-{% for msg in messages %}
-<div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
-  {{ msg }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-{% endfor %}
-{% endif %}
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item">
+        <a href="{% url 'store:catalog' %}" style="color: var(--c-accent); text-decoration: none;">Shop</a>
+      </li>
+      {% if product.category %}
+      <li class="breadcrumb-item" style="color: var(--c-muted);">{{ product.category }}</li>
+      {% endif %}
+      <li class="breadcrumb-item active" style="color: var(--c-muted);">{{ product.name }}</li>
+    </ol>
+  </nav>
 
-<div class="row g-4">
-  <div class="col-md-4">
-    {% if product.image %}
-    <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
-    {% else %}
-    <div class="d-flex align-items-center justify-content-center bg-light rounded" style="height: 300px;">
-      <i class="bi bi-box-seam text-secondary" style="font-size: 5rem;"></i>
-    </div>
-    {% endif %}
-  </div>
+  <!-- Product section -->
+  <div class="row g-5 mb-5">
 
-  <div class="col-md-8">
-    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-      <div>
-        <h3 class="fw-bold mb-1">{{ product.name }}</h3>
-        {% if product.category %}
-        <p class="text-muted mb-1"><i class="bi bi-tag"></i> {{ product.category }}</p>
-        {% endif %}
-      </div>
-      <!-- Like button -->
-      <form method="post" action="{% url 'store:product-like' product.pk %}">
-        {% csrf_token %}
-        <button type="submit" class="btn {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %} d-flex align-items-center gap-2">
-          <i class="bi bi-heart{% if user_liked %}-fill{% endif %}"></i>
-          <span>{{ like_count }}</span>
-        </button>
-      </form>
-    </div>
-
-    <!-- Rating summary -->
-    {% if avg_rating %}
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <div>
-        {% for i in "12345" %}
-        {% if forloop.counter <= avg_rating_rounded %}
-        <i class="bi bi-star-fill text-warning"></i>
+    <!-- Image -->
+    <div class="col-md-5">
+      <div style="background: #f3f4f6; border-radius: var(--radius-lg); overflow: hidden; aspect-ratio: 1/1;">
+        {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+             style="width: 100%; height: 100%; object-fit: cover;">
         {% else %}
-        <i class="bi bi-star text-secondary"></i>
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--c-muted-light);">
+          <i class="bi bi-box-seam"></i>
+        </div>
         {% endif %}
-        {% endfor %}
-      </div>
-      <span class="fw-semibold">{{ avg_rating }}</span>
-      <span class="text-muted small">({{ review_count }} review{{ review_count|pluralize }})</span>
-    </div>
-    {% else %}
-    <p class="text-muted small mb-2">No reviews yet</p>
-    {% endif %}
-
-    <p class="fs-4 fw-bold text-dark">${{ product.base_price }}</p>
-
-    {% if product.description %}
-    <p class="text-muted">{{ product.description }}</p>
-    {% endif %}
-
-    {% if variants_data %}
-    <h6 class="fw-semibold mt-4 mb-3">Select Variant</h6>
-    {% for vd in variants_data %}
-    <div class="card mb-3 {% if vd.stock <= 0 %}border-secondary{% endif %}">
-      <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
-        <div>
-          <span class="fw-semibold">{{ vd.variant }}</span>
-          <small class="text-muted ms-2">SKU: {{ vd.variant.sku }}</small>
-          {% if vd.variant.price_override %}
-          <span class="ms-2 text-primary fw-bold">${{ vd.variant.price_override }}</span>
-          {% endif %}
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          {% if vd.stock <= 0 %}
-          <span class="badge stock-badge-out">Out of Stock</span>
-          <button class="btn btn-sm btn-secondary" disabled>Add</button>
-          {% elif vd.stock < 5 %}
-          <span class="badge stock-badge-low">{{ vd.stock|floatformat:0 }} left</span>
-          <form method="post" action="{% url 'store:add-to-cart' %}">
-            {% csrf_token %}
-            <input type="hidden" name="variant_id" value="{{ vd.variant.pk }}">
-            <button type="submit" class="btn btn-sm btn-primary">
-              <i class="bi bi-cart-plus"></i> Add
-            </button>
-          </form>
-          {% else %}
-          <span class="badge stock-badge-in">In Stock</span>
-          <form method="post" action="{% url 'store:add-to-cart' %}">
-            {% csrf_token %}
-            <input type="hidden" name="variant_id" value="{{ vd.variant.pk }}">
-            <button type="submit" class="btn btn-sm btn-primary">
-              <i class="bi bi-cart-plus"></i> Add
-            </button>
-          </form>
-          {% endif %}
-        </div>
       </div>
     </div>
-    {% endfor %}
-    {% else %}
-    <div class="alert alert-warning">No variants available for this product.</div>
-    {% endif %}
-  </div>
-</div>
 
-<!-- Reviews Section -->
-<hr class="my-5">
-<div class="row g-4">
+    <!-- Info -->
+    <div class="col-md-7">
+      {% if product.category %}
+      <p style="font-size: 0.75rem; font-weight: 700; color: var(--c-accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">
+        {{ product.category }}
+      </p>
+      {% endif %}
 
-  <!-- Write a review -->
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-header fw-semibold">
-        {% if user_review %}<i class="bi bi-pencil"></i> Edit Your Review
-        {% elif can_review %}<i class="bi bi-star"></i> Write a Review
-        {% else %}<i class="bi bi-lock"></i> Write a Review{% endif %}
-      </div>
-      <div class="card-body">
-        {% if can_review %}
-        <form method="post" action="{% url 'store:product-review' product.pk %}">
+      <h1 style="font-family: var(--font-display); font-weight: 700; font-size: clamp(1.5rem,3vw,2rem); letter-spacing: -0.02em; margin-bottom: 0.75rem; line-height: 1.2;">
+        {{ product.name }}
+      </h1>
+
+      <!-- Rating row -->
+      <div class="d-flex align-items-center gap-3 mb-3">
+        {% if avg_rating %}
+        <div class="d-flex align-items-center gap-1">
+          <span class="stars" style="font-size: 0.9rem;">
+            {% for i in "12345" %}
+            {% if forloop.counter <= avg_rating_rounded %}
+            <i class="bi bi-star-fill"></i>
+            {% else %}
+            <i class="bi bi-star empty"></i>
+            {% endif %}
+            {% endfor %}
+          </span>
+          <span style="font-weight: 600; font-size: 0.875rem;">{{ avg_rating }}</span>
+          <span style="color: var(--c-muted); font-size: 0.8rem;">({{ review_count }} review{{ review_count|pluralize }})</span>
+        </div>
+        {% else %}
+        <span style="color: var(--c-muted); font-size: 0.85rem;">No reviews yet</span>
+        {% endif %}
+
+        <!-- Like button -->
+        <form method="post" action="{% url 'store:product-like' product.pk %}" class="ms-auto">
           {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Rating</label>
-            <div class="d-flex gap-2 flex-wrap">
-              {% for i in "12345" %}
-              <input type="radio" name="rating" value="{{ forloop.counter }}"
-                     id="star{{ forloop.counter }}" class="btn-check"
-                     {% if user_review.rating == forloop.counter %}checked{% endif %} required>
-              <label class="btn btn-outline-warning btn-sm" for="star{{ forloop.counter }}">
-                {{ forloop.counter }} <i class="bi bi-star-fill"></i>
-              </label>
-              {% endfor %}
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Your Review</label>
-            <textarea name="body" class="form-control" rows="4"
-                      placeholder="Share your experience with this product…" required>{% if user_review %}{{ user_review.body }}{% endif %}</textarea>
-          </div>
-
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-send"></i> {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+          <button type="submit" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; border: 1px solid {% if user_liked %}#fecdd3{% else %}var(--c-border){% endif %}; background: {% if user_liked %}#fff1f2{% else %}transparent{% endif %}; color: {% if user_liked %}#e11d48{% else %}var(--c-muted){% endif %}; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all var(--transition);">
+            <i class="bi bi-heart{% if user_liked %}-fill{% endif %}"></i>
+            {{ like_count }}
           </button>
         </form>
+      </div>
+
+      <div style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1rem; color: var(--c-text);">
+        ${{ product.base_price }}
+      </div>
+
+      {% if product.description %}
+      <p style="color: var(--c-muted); font-size: 0.9rem; line-height: 1.65; margin-bottom: 1.5rem;">
+        {{ product.description }}
+      </p>
+      {% endif %}
+
+      <!-- Variants -->
+      {% if variants_data %}
+      <div style="margin-bottom: 1.5rem;">
+        <p style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-muted); margin-bottom: 0.75rem;">
+          Available options
+        </p>
+        <div class="d-flex flex-column gap-2">
+          {% for vd in variants_data %}
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; border: 1px solid {% if vd.stock <= 0 %}var(--c-border){% else %}var(--c-border){% endif %}; border-radius: var(--radius-md); background: var(--c-surface); {% if vd.stock <= 0 %}opacity: .6;{% endif %}">
+            <div>
+              <span style="font-weight: 600; font-size: 0.9rem;">{{ vd.variant }}</span>
+              <span style="color: var(--c-muted); font-size: 0.78rem; margin-left: 8px;">SKU: {{ vd.variant.sku }}</span>
+              {% if vd.variant.price_override %}
+              <span style="color: var(--c-accent); font-weight: 700; font-size: 0.9rem; margin-left: 8px;">${{ vd.variant.price_override }}</span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if vd.stock <= 0 %}
+              <span class="badge-stock badge-out">Out of stock</span>
+              {% elif vd.stock < 5 %}
+              <span class="badge-stock badge-low">{{ vd.stock|floatformat:0 }} left</span>
+              <form method="post" action="{% url 'store:add-to-cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="variant_id" value="{{ vd.variant.pk }}">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-bag-plus"></i> Add</button>
+              </form>
+              {% else %}
+              <span class="badge-stock badge-in">In stock</span>
+              <form method="post" action="{% url 'store:add-to-cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="variant_id" value="{{ vd.variant.pk }}">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-bag-plus"></i> Add</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-warning">No variants available for this product.</div>
+      {% endif %}
+
+      <!-- Trust signals -->
+      <div class="d-flex gap-4 flex-wrap" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--c-border);">
+        <div class="d-flex align-items-center gap-2" style="font-size: 0.8rem; color: var(--c-muted);">
+          <i class="bi bi-truck" style="color: var(--c-success);"></i> Free shipping
+        </div>
+        <div class="d-flex align-items-center gap-2" style="font-size: 0.8rem; color: var(--c-muted);">
+          <i class="bi bi-shield-check" style="color: var(--c-success);"></i> Secure checkout
+        </div>
+        <div class="d-flex align-items-center gap-2" style="font-size: 0.8rem; color: var(--c-muted);">
+          <i class="bi bi-arrow-counterclockwise" style="color: var(--c-success);"></i> Easy returns
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews section -->
+  <div style="border-top: 1px solid var(--c-border); padding-top: 3rem;">
+    <h2 class="section-title mb-4">Customer Reviews</h2>
+
+    <div class="row g-5">
+
+      <!-- Write review -->
+      <div class="col-md-4">
+        <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; position: sticky; top: 80px;">
+          <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--c-border); background: var(--c-bg);">
+            <p style="font-weight: 600; font-size: 0.9rem; margin: 0;">
+              {% if user_review %}<i class="bi bi-pencil me-2" style="color: var(--c-accent);"></i>Edit Your Review
+              {% elif can_review %}<i class="bi bi-star me-2" style="color: var(--c-accent);"></i>Write a Review
+              {% else %}<i class="bi bi-lock me-2" style="color: var(--c-muted);"></i>Write a Review{% endif %}
+            </p>
+          </div>
+          <div style="padding: 1.25rem;">
+            {% if can_review %}
+            <form method="post" action="{% url 'store:product-review' product.pk %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-muted); display: block; margin-bottom: 8px;">Rating</label>
+                <div class="d-flex gap-2">
+                  {% for i in "12345" %}
+                  <input type="radio" name="rating" value="{{ forloop.counter }}"
+                         id="star{{ forloop.counter }}" class="btn-check"
+                         {% if user_review.rating == forloop.counter %}checked{% endif %} required>
+                  <label class="btn btn-outline-warning btn-sm" for="star{{ forloop.counter }}" style="font-size: 0.8rem; padding: 4px 10px;">
+                    {{ forloop.counter }}<i class="bi bi-star-fill ms-1"></i>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="mb-3">
+                <label style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-muted); display: block; margin-bottom: 8px;">Your Review</label>
+                <textarea name="body" class="form-control" rows="4"
+                          placeholder="What did you think of this product?" required>{% if user_review %}{{ user_review.body }}{% endif %}</textarea>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-send me-2"></i>{% if user_review %}Update Review{% else %}Submit Review{% endif %}
+              </button>
+            </form>
+            {% else %}
+            <div style="text-align: center; padding: 2rem 1rem; color: var(--c-muted);">
+              <div style="width: 52px; height: 52px; background: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.4rem;">
+                <i class="bi bi-lock"></i>
+              </div>
+              <p style="font-size: 0.85rem; margin: 0; line-height: 1.5;">
+                Reviews are unlocked after your order has been delivered.
+              </p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Review list -->
+      <div class="col-md-8">
+        {% if reviews %}
+        <div class="d-flex flex-column gap-3">
+          {% for review in reviews %}
+          <div style="background: var(--c-surface); border: 1px solid {% if review.user == request.user %}rgba(249,115,22,.3){% else %}var(--c-border){% endif %}; border-radius: var(--radius-md); padding: 1.25rem; {% if review.user == request.user %}background: #fffbf7;{% endif %}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: var(--c-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+                  {{ review.user.first_name|first|upper|default:"U" }}
+                </div>
+                <div>
+                  <span style="font-weight: 600; font-size: 0.875rem;">
+                    {{ review.user.get_full_name|default:review.user.email }}
+                  </span>
+                  {% if review.user == request.user %}
+                  <span style="display: inline-block; background: var(--c-accent); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: middle;">You</span>
+                  {% endif %}
+                </div>
+              </div>
+              <span style="font-size: 0.78rem; color: var(--c-muted);">{{ review.created_at|date:"d M Y" }}</span>
+            </div>
+            <div class="stars mb-2" style="font-size: 0.85rem;">
+              {% for i in "12345" %}
+              {% if forloop.counter <= review.rating %}
+              <i class="bi bi-star-fill"></i>
+              {% else %}
+              <i class="bi bi-star empty"></i>
+              {% endif %}
+              {% endfor %}
+            </div>
+            <p style="font-size: 0.9rem; color: var(--c-text); line-height: 1.6; margin: 0;">{{ review.body }}</p>
+          </div>
+          {% endfor %}
+        </div>
         {% else %}
-        <div class="text-center py-4 text-muted">
-          <i class="bi bi-lock" style="font-size: 2rem; display:block; margin-bottom: 0.75rem;"></i>
-          <p class="mb-0 small">You can leave a review after your order has been delivered.</p>
+        <div style="text-align: center; padding: 4rem 1rem; color: var(--c-muted);">
+          <div style="width: 64px; height: 64px; background: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.75rem;">
+            <i class="bi bi-chat-square-text"></i>
+          </div>
+          <p style="font-size: 0.9rem; margin: 0;">No reviews yet. Be the first to share your experience!</p>
         </div>
         {% endif %}
       </div>
-    </div>
-  </div>
 
-  <!-- Existing reviews -->
-  <div class="col-md-8">
-    <h5 class="fw-bold mb-3">
-      Customer Reviews
-      {% if review_count %}<span class="text-muted fw-normal small">({{ review_count }})</span>{% endif %}
-    </h5>
-
-    {% if reviews %}
-    {% for review in reviews %}
-    <div class="card mb-3 {% if review.user == request.user %}border-primary{% endif %}">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <div>
-            <span class="fw-semibold">{{ review.user.full_name|default:review.user.email }}</span>
-            {% if review.user == request.user %}
-            <span class="badge bg-primary ms-1">You</span>
-            {% endif %}
-          </div>
-          <small class="text-muted">{{ review.created_at|date:"d M Y" }}</small>
-        </div>
-        <div class="mb-2">
-          {% for i in "12345" %}
-          {% if forloop.counter <= review.rating %}
-          <i class="bi bi-star-fill text-warning" style="font-size: 0.85rem;"></i>
-          {% else %}
-          <i class="bi bi-star text-secondary" style="font-size: 0.85rem;"></i>
-          {% endif %}
-          {% endfor %}
-        </div>
-        <p class="mb-0 text-secondary">{{ review.body }}</p>
-      </div>
     </div>
-    {% endfor %}
-    {% else %}
-    <div class="text-center py-5 text-muted">
-      <i class="bi bi-chat-square-text" style="font-size: 2.5rem; display:block; margin-bottom: 0.75rem;"></i>
-      No reviews yet. Be the first to leave one!
-    </div>
-    {% endif %}
   </div>
 
 </div>
-{% endblock content %}
+{% endblock %}

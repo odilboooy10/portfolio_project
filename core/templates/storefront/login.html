@@ -1,38 +1,56 @@
 {% extends "storefront/base.html" %}
-{% block title %}Sign In — ERP Shop{% endblock title %}
+{% block title %}Sign In — CoreShop{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-4">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h4 class="mb-4 fw-bold"><i class="bi bi-box-arrow-in-right"></i> Sign In</h4>
+<div style="min-height: calc(100vh - 64px - 200px); display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+  <div style="width: 100%; max-width: 400px;">
 
-        {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-
-        <form method="post">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="form-label">Email Address</label>
-            <input type="email" name="email" class="form-control" autofocus required>
-          </div>
-          <div class="mb-4">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-box-arrow-in-right"></i> Sign In
-          </button>
-        </form>
-
-        <hr>
-        <p class="text-center mb-0 small">
-          No account? <a href="{% url 'store:signup' %}">Create one</a>
-        </p>
+    <!-- Logo mark -->
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="width: 52px; height: 52px; background: var(--c-accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.4rem; color: #fff;">
+        <i class="bi bi-bag-heart-fill"></i>
       </div>
+      <h2 style="font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Welcome back</h2>
+      <p style="color: var(--c-muted); font-size: 0.875rem; margin: 0;">Sign in to your CoreShop account</p>
     </div>
+
+    <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-sm);">
+
+      {% if error %}
+      <div class="alert alert-danger mb-4" style="font-size: 0.875rem;">
+        <i class="bi bi-exclamation-circle me-2"></i>{{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">Email address</label>
+          <input type="email" name="email" class="form-control"
+                 placeholder="you@example.com"
+                 autofocus required>
+        </div>
+
+        <div class="mb-4">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">Password</label>
+          <input type="password" name="password" class="form-control"
+                 placeholder="••••••••"
+                 required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding: 0.7rem;">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+
+    <p style="text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--c-muted);">
+      Don't have an account?
+      <a href="{% url 'store:signup' %}" style="color: var(--c-accent); font-weight: 600; text-decoration: none;">Create one free</a>
+    </p>
+
   </div>
 </div>
-{% endblock content %}
+{% endblock %}

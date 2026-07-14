@@ -1,114 +1,190 @@
 {% extends "storefront/base.html" %}
-{% block title %}Checkout — ERP Shop{% endblock title %}
+{% block title %}Checkout — CoreShop{% endblock %}
 
 {% block content %}
-<h4 class="fw-bold mb-4"><i class="bi bi-credit-card"></i> Checkout</h4>
+<div class="container page-content" style="max-width: 1000px;">
 
-<div class="row g-4">
-  <div class="col-lg-7">
-    <form method="post">
-      {% csrf_token %}
-
-      <div class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">
-          <i class="bi bi-person"></i> Contact Information
-        </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-control" value="{{ user.get_full_name|default:user.email }}" disabled>
-          </div>
-          <div class="mb-0">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" value="{{ user.email }}" disabled>
-          </div>
-        </div>
+  <!-- Progress steps -->
+  <div style="display: flex; align-items: center; gap: 0; margin-bottom: 2.5rem; max-width: 420px; margin-left: auto; margin-right: auto;">
+    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--c-success); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.875rem;">
+        <i class="bi bi-check"></i>
       </div>
-
-      <div class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">
-          <i class="bi bi-geo-alt"></i> Shipping Address
-        </div>
-        <div class="card-body">
-          <div class="mb-0">
-            <label class="form-label">Delivery Address</label>
-            <textarea name="address" class="form-control" rows="3" placeholder="Street, City, State, ZIP" required></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">
-          <i class="bi bi-credit-card-2-front"></i> Payment (Demo)
-        </div>
-        <div class="card-body">
-          <div class="alert alert-info small mb-3">
-            <i class="bi bi-info-circle"></i>
-            This is a demo storefront. Payment is simulated — no real charge will occur.
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Card Number</label>
-            <input type="text" class="form-control" placeholder="4242 4242 4242 4242" disabled>
-          </div>
-          <div class="row g-3">
-            <div class="col">
-              <label class="form-label">Expiry</label>
-              <input type="text" class="form-control" placeholder="MM / YY" disabled>
-            </div>
-            <div class="col">
-              <label class="form-label">CVC</label>
-              <input type="text" class="form-control" placeholder="123" disabled>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-success btn-lg w-100">
-        <i class="bi bi-bag-check"></i> Place Order
-      </button>
-    </form>
-  </div>
-
-  <div class="col-lg-5">
-    <div class="card shadow-sm">
-      <div class="card-header fw-semibold">
-        <i class="bi bi-receipt"></i> Order Summary
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-sm mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Item</th>
-              <th class="text-center">Qty</th>
-              <th class="text-end">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in items %}
-            <tr>
-              <td>
-                <span class="fw-semibold">{{ item.variant.product.name }}</span>
-                <small class="d-block text-muted">{{ item.variant.sku }}</small>
-              </td>
-              <td class="text-center">{{ item.quantity }}</td>
-              <td class="text-end">${{ item.line_total|floatformat:2 }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="2" class="fw-bold">Total</td>
-              <td class="text-end fw-bold">${{ total|floatformat:2 }}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <div class="card-footer">
-        <a href="{% url 'store:cart' %}" class="btn btn-outline-secondary btn-sm w-100">
-          <i class="bi bi-pencil"></i> Edit Cart
-        </a>
-      </div>
+      <span style="font-size: 0.7rem; color: var(--c-success); font-weight: 600; margin-top: 6px;">Cart</span>
+    </div>
+    <div style="flex: 1; height: 2px; background: var(--c-accent); margin-bottom: 18px;"></div>
+    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--c-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">2</div>
+      <span style="font-size: 0.7rem; color: var(--c-accent); font-weight: 600; margin-top: 6px;">Checkout</span>
+    </div>
+    <div style="flex: 1; height: 2px; background: var(--c-border); margin-bottom: 18px;"></div>
+    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--c-border); color: var(--c-muted); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">3</div>
+      <span style="font-size: 0.7rem; color: var(--c-muted); font-weight: 600; margin-top: 6px;">Confirmed</span>
     </div>
   </div>
+
+  <div class="row g-4 align-items-start">
+
+    <!-- Form -->
+    <div class="col-lg-7">
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Contact -->
+        <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1rem;">
+          <div style="padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--c-border); display: flex; align-items: center; gap: 10px;">
+            <div style="width: 28px; height: 28px; background: var(--c-accent-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--c-accent); font-size: 0.8rem; flex-shrink: 0;">
+              <i class="bi bi-person"></i>
+            </div>
+            <span style="font-weight: 600; font-size: 0.875rem;">Contact information</span>
+          </div>
+          <div style="padding: 1.25rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 5px;">Full Name</label>
+              <input type="text" class="form-control form-control-sm"
+                     value="{{ user.get_full_name|default:user.email }}" disabled
+                     style="background: var(--c-bg); color: var(--c-muted);">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 5px;">Email</label>
+              <input type="email" class="form-control form-control-sm"
+                     value="{{ user.email }}" disabled
+                     style="background: var(--c-bg); color: var(--c-muted);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping -->
+        <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1rem;">
+          <div style="padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--c-border); display: flex; align-items: center; gap: 10px;">
+            <div style="width: 28px; height: 28px; background: var(--c-accent-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--c-accent); font-size: 0.8rem; flex-shrink: 0;">
+              <i class="bi bi-geo-alt"></i>
+            </div>
+            <span style="font-weight: 600; font-size: 0.875rem;">Shipping address</span>
+          </div>
+          <div style="padding: 1.25rem;">
+            <label style="font-size: 0.75rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 5px;">Delivery address</label>
+            <textarea name="address" class="form-control" rows="3"
+                      placeholder="Street address, City, State, ZIP code" required
+                      style="resize: none;"></textarea>
+          </div>
+        </div>
+
+        <!-- Payment (demo) -->
+        <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.5rem;">
+          <div style="padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--c-border); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 28px; height: 28px; background: var(--c-accent-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--c-accent); font-size: 0.8rem; flex-shrink: 0;">
+                <i class="bi bi-credit-card"></i>
+              </div>
+              <span style="font-weight: 600; font-size: 0.875rem;">Payment</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <span style="background: #1a1f71; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;">VISA</span>
+              <span style="background: #eb001b; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; position: relative;">
+                <span style="position: absolute; left: 14px; top: 0; bottom: 0; width: 10px; background: #f79e1b; border-radius: 0 4px 4px 0; display: flex; align-items: center;"></span>
+                MC
+              </span>
+            </div>
+          </div>
+          <div style="padding: 1.25rem;">
+            <div style="background: #fffbf5; border: 1px solid #fed7aa; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.8rem; color: #9a3412; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 1rem;">
+              <i class="bi bi-shield-check" style="flex-shrink: 0; margin-top: 1px;"></i>
+              <span>This is a demo storefront — no real charge will occur. Your order will be placed instantly.</span>
+            </div>
+
+            <!-- Mock card -->
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; padding: 1.25rem 1.5rem; color: #fff; margin-bottom: 1rem; position: relative; overflow: hidden;">
+              <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,.06);"></div>
+              <div style="position: absolute; right: 20px; bottom: -30px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,.04);"></div>
+              <div style="font-size: 0.7rem; opacity: .6; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1.25rem;">Demo Card</div>
+              <div style="font-size: 1.1rem; letter-spacing: 0.18em; font-weight: 500; margin-bottom: 1rem;">4242  4242  4242  4242</div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: .7;">
+                <span>{{ user.get_full_name|default:"CARDHOLDER NAME"|upper }}</span>
+                <span>12 / 29</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 5px;">Expiry date</label>
+                <input type="text" class="form-control form-control-sm" placeholder="MM / YY" disabled
+                       style="background: var(--c-bg); color: var(--c-muted);">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--c-muted); display: block; margin-bottom: 5px;">CVC</label>
+                <input type="text" class="form-control form-control-sm" placeholder="•••" disabled
+                       style="background: var(--c-bg); color: var(--c-muted);">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding: 0.875rem; font-size: 1rem; font-weight: 700;">
+          <i class="bi bi-bag-check me-2"></i>Place Order — ${{ total|floatformat:2 }}
+        </button>
+
+        <p style="text-align: center; font-size: 0.78rem; color: var(--c-muted); margin-top: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="bi bi-shield-lock"></i> Secure checkout · Free shipping · Easy returns
+        </p>
+      </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="col-lg-5">
+      <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; position: sticky; top: 80px;">
+        <div style="padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--c-border);">
+          <span style="font-weight: 600; font-size: 0.875rem;">Order summary</span>
+          <span style="float: right; font-size: 0.78rem; color: var(--c-muted);">{{ items|length }} item{{ items|length|pluralize }}</span>
+        </div>
+
+        <div style="padding: 0; max-height: 320px; overflow-y: auto;">
+          {% for item in items %}
+          <div style="display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1.25rem; {% if not forloop.last %}border-bottom: 1px solid var(--c-border);{% endif %}">
+            <!-- Image -->
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-sm); background: #f3f4f6; overflow: hidden; flex-shrink: 0; position: relative;">
+              {% if item.variant.product.image %}
+              <img src="{{ item.variant.product.image.url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+              <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--c-muted-light); font-size: 1rem;">
+                <i class="bi bi-box-seam"></i>
+              </div>
+              {% endif %}
+              <span style="position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--c-primary); color: #fff; border-radius: 50%; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{ item.quantity }}</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <p style="font-weight: 600; font-size: 0.83rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ item.variant.product.name }}</p>
+              <p style="font-size: 0.75rem; color: var(--c-muted); margin: 0;">{{ item.variant.sku }}</p>
+            </div>
+            <span style="font-weight: 700; font-size: 0.875rem; flex-shrink: 0;">${{ item.line_total|floatformat:2 }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--c-border); background: var(--c-bg);">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem;">
+            <span style="color: var(--c-muted);">Subtotal</span>
+            <span style="font-weight: 600;">${{ total|floatformat:2 }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 1rem;">
+            <span style="color: var(--c-muted);">Shipping</span>
+            <span style="color: var(--c-success); font-weight: 600;">Free</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-top: 0.875rem; border-top: 1px solid var(--c-border);">
+            <span style="font-weight: 700;">Total</span>
+            <span style="font-weight: 800; font-size: 1.1rem;">${{ total|floatformat:2 }}</span>
+          </div>
+        </div>
+
+        <div style="padding: 0.875rem 1.25rem; border-top: 1px solid var(--c-border);">
+          <a href="{% url 'store:cart' %}" style="font-size: 0.8rem; color: var(--c-muted); text-decoration: none; display: flex; align-items: center; gap: 6px;">
+            <i class="bi bi-arrow-left"></i> Edit your bag
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
-{% endblock content %}
+{% endblock %}

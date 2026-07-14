@@ -1,72 +1,81 @@
 {% extends "storefront/base.html" %}
-{% block title %}Create Account — ERP Shop{% endblock title %}
+{% block title %}Create Account — CoreShop{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h4 class="mb-4 fw-bold"><i class="bi bi-person-plus"></i> Create Account</h4>
+<div style="min-height: calc(100vh - 64px - 200px); display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+  <div style="width: 100%; max-width: 440px;">
 
-        <form method="post">
-          {% csrf_token %}
-
-          <div class="row g-3 mb-3">
-            <div class="col">
-              <label class="form-label">First Name</label>
-              <input type="text" name="first_name" class="form-control {% if errors.first_name %}is-invalid{% endif %}"
-                     value="{{ first_name }}" required>
-              {% if errors.first_name %}
-              <div class="invalid-feedback">{{ errors.first_name }}</div>
-              {% endif %}
-            </div>
-            <div class="col">
-              <label class="form-label">Last Name</label>
-              <input type="text" name="last_name" class="form-control" value="{{ last_name }}">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Email Address</label>
-            <input type="email" name="email" class="form-control {% if errors.email %}is-invalid{% endif %}"
-                   value="{{ email }}" required>
-            {% if errors.email %}
-            <div class="invalid-feedback">{{ errors.email }}</div>
-            {% endif %}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="password1" class="form-control {% if errors.password1 %}is-invalid{% endif %}" required>
-            {% if errors.password1 %}
-            <div class="invalid-feedback">{{ errors.password1 }}</div>
-            {% endif %}
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label">Confirm Password</label>
-            <input type="password" name="password2" class="form-control {% if errors.password2 %}is-invalid{% endif %}" required>
-            {% if errors.password2 %}
-            <div class="invalid-feedback">{{ errors.password2 }}</div>
-            {% endif %}
-          </div>
-
-          <div class="alert alert-info small mb-3">
-            <i class="bi bi-info-circle"></i>
-            After registering, your account will need admin approval before you can log in.
-          </div>
-
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-person-check"></i> Create Account
-          </button>
-        </form>
-
-        <hr>
-        <p class="text-center mb-0 small">
-          Already have an account? <a href="{% url 'store:login' %}">Sign In</a>
-        </p>
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="width: 52px; height: 52px; background: var(--c-accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.4rem; color: #fff;">
+        <i class="bi bi-person-plus-fill"></i>
       </div>
+      <h2 style="font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 0.25rem;">Create an account</h2>
+      <p style="color: var(--c-muted); font-size: 0.875rem; margin: 0;">Join CoreShop and start shopping today</p>
     </div>
+
+    <div style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-sm);">
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">First Name</label>
+            <input type="text" name="first_name" class="form-control {% if errors.first_name %}is-invalid{% endif %}"
+                   value="{{ first_name }}" placeholder="John" required>
+            {% if errors.first_name %}
+            <div class="invalid-feedback">{{ errors.first_name }}</div>
+            {% endif %}
+          </div>
+          <div class="col">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">Last Name</label>
+            <input type="text" name="last_name" class="form-control" value="{{ last_name }}" placeholder="Doe">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">Email address</label>
+          <input type="email" name="email" class="form-control {% if errors.email %}is-invalid{% endif %}"
+                 value="{{ email }}" placeholder="you@example.com" required>
+          {% if errors.email %}
+          <div class="invalid-feedback">{{ errors.email }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">Password</label>
+          <input type="password" name="password1" class="form-control {% if errors.password1 %}is-invalid{% endif %}"
+                 placeholder="Min. 8 characters" required>
+          {% if errors.password1 %}
+          <div class="invalid-feedback">{{ errors.password1 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--c-text); display: block; margin-bottom: 6px;">Confirm Password</label>
+          <input type="password" name="password2" class="form-control {% if errors.password2 %}is-invalid{% endif %}"
+                 placeholder="Repeat password" required>
+          {% if errors.password2 %}
+          <div class="invalid-feedback">{{ errors.password2 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="alert alert-info mb-4" style="font-size: 0.8rem;">
+          <i class="bi bi-info-circle me-2"></i>
+          Your account will require admin approval before you can sign in.
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding: 0.7rem;">
+          Create Account
+        </button>
+      </form>
+    </div>
+
+    <p style="text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--c-muted);">
+      Already have an account?
+      <a href="{% url 'store:login' %}" style="color: var(--c-accent); font-weight: 600; text-decoration: none;">Sign in</a>
+    </p>
+
   </div>
 </div>
-{% endblock content %}
+{% endblock %}
